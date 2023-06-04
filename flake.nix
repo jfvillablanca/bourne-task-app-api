@@ -33,6 +33,10 @@
               name = "nest";
               package = pkgs.nest-cli;
             }
+            {
+              name = "insomnia";
+              package = pkgs.insomnia;
+            }
           ];
           env = [ ];
         };
