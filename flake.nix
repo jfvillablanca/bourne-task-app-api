@@ -26,6 +26,10 @@
               package = pkgs.nodejs_20;
             }
             {
+              name = "yarn";
+              package = pkgs.yarn;
+            }
+            {
               name = "nest";
               package = pkgs.nest-cli;
             }
