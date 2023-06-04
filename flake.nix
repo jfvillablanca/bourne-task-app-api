@@ -25,6 +25,10 @@
               name = "node";
               package = pkgs.nodejs_20;
             }
+            {
+              name = "nest";
+              package = pkgs.nest-cli;
+            }
           ];
           env = [ ];
         };
