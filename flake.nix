@@ -37,6 +37,14 @@
               name = "insomnia";
               package = pkgs.insomnia;
             }
+            {
+              name = "docker";
+              package = pkgs.docker;
+            }
+            {
+              name = "docker-compose";
+              package = pkgs.docker-compose;
+            }
           ];
           env = [ ];
         };
