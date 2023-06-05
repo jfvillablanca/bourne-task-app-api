@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from '../user/user.model';
 import { AuthDto } from './dto';
+import * as argon from 'argon2';
 
 @Injectable()
 export class AuthService {
@@ -11,8 +12,14 @@ export class AuthService {
     ) {}
 
     async register(dto: AuthDto) {
-        const newUser = new this.userModel(dto);
-        return await newUser.save();
+        const hash = await argon.hash(dto.password);
+        const newUser = new this.userModel({ ...dto, password: hash });
+        const document = await newUser.save();
+        const { password, ...result } = document.toObject({
+            versionKey: false,
+        });
+        void password;
+        return result;
     }
 
     login() {
