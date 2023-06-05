@@ -16,6 +16,7 @@
           pkgs = import nixpkgs {
             inherit system;
             overlays = [ devshell.overlays.default ];
+            config.allowUnfree=true;
           };
         in
         pkgs.devshell.mkShell {
@@ -44,6 +45,10 @@
             {
               name = "docker-compose";
               package = pkgs.docker-compose;
+            }
+            {
+              name = "mongodb-compass";
+              package = pkgs.mongodb-compass;
             }
           ];
           env = [ ];
