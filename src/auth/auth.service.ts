@@ -49,7 +49,7 @@ export class AuthService {
         const isValidLoginByEmail = await this.userModel.exists({
             email: dto.usernameOrEmail,
         });
-        if (!isValidLoginByUsername || !isValidLoginByEmail) {
+        if (!isValidLoginByUsername && !isValidLoginByEmail) {
             throw new ForbiddenException('Invalid credentials');
         }
     }
