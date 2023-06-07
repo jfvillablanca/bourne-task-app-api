@@ -1,9 +1,9 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { connect, Connection, Model } from 'mongoose';
-import { RegisterDTOStub } from '../../test/stubs/auth.dto.stub';
+import { LoginDTOStub, RegisterDTOStub } from '../../test/stubs/auth.dto.stub';
 import { User, UserSchema } from '../user/user.model';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -84,6 +84,17 @@ describe('AuthController', () => {
                 authController.register(RegisterDTOStub()),
             ).rejects.toThrow(
                 new ConflictException('Username is already taken'),
+            );
+        });
+    });
+    describe('/login', () => {
+        it('should throw an exception if username or email does not exist', async () => {
+            await expect(
+                authController.login(LoginDTOStub({ useEmail: true })),
+            ).rejects.toThrow(new ForbiddenException('Invalid credentials'));
+
+            await expect(authController.login(LoginDTOStub())).rejects.toThrow(
+                new ForbiddenException('Invalid credentials'),
             );
         });
     });
