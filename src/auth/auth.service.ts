@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as argon from 'argon2';
 import { Model } from 'mongoose';
 import { User } from '../user/user.model';
-import { AuthDto } from './dto';
+import { RegisterDto } from './dto';
 
 @Injectable()
 export class AuthService {
@@ -11,7 +11,7 @@ export class AuthService {
         @InjectModel(User.name) private readonly userModel: Model<User>,
     ) {}
 
-    async register(dto: AuthDto) {
+    async register(dto: RegisterDto) {
         const usernameTaken = await this.userModel.exists({
             username: dto.username,
         });

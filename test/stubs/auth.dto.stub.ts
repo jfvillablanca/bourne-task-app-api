@@ -1,6 +1,6 @@
-import { AuthDto } from '../../src/auth/dto';
+import { RegisterDto } from '../../src/auth/dto';
 
-export const AuthDTOStub = (): AuthDto => {
+export const RegisterDTOStub = (): RegisterDto => {
     return {
         username: 'testuser',
         password: 'testpassword',
