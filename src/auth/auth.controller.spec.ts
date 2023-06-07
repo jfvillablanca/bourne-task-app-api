@@ -97,5 +97,17 @@ describe('AuthController', () => {
                 new ForbiddenException('Invalid credentials'),
             );
         });
+
+        it('should throw an exception if password is incorrect', async () => {
+            await authController.register(RegisterDTOStub());
+
+            await expect(
+                authController.login({
+                    ...LoginDTOStub(),
+                    password: 'wrong_password',
+                }),
+            ).rejects.toThrow(new ForbiddenException('Invalid password'));
+        });
+
     });
 });
