@@ -1,9 +1,13 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+    ConflictException,
+    ForbiddenException,
+    Injectable
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as argon from 'argon2';
 import { Model } from 'mongoose';
 import { User } from '../user/user.model';
-import { RegisterDto } from './dto';
+import { LoginDto, RegisterDto } from './dto';
 
 @Injectable()
 export class AuthService {
@@ -34,7 +38,15 @@ export class AuthService {
         return result;
     }
 
-    login() {
-        return 'Signin';
+    async login(dto: LoginDto) {
+        const isValidLoginByUsername = await this.userModel.exists({
+            username: dto.usernameOrEmail,
+        });
+        const isValidLoginByEmail = await this.userModel.exists({
+            email: dto.usernameOrEmail,
+        });
+        if (!isValidLoginByUsername || !isValidLoginByEmail) {
+            throw new ForbiddenException('Invalid credentials');
+        }
     }
 }
