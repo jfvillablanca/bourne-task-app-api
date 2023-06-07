@@ -1,10 +1,10 @@
 version: '3'
 services:
-  mongodb:
+  mongodb-playground:
     image: mongo
-    container_name: mongodb
+    container_name: mongodb-playground
     ports:
-      - '27017:27017'
+      - '27018:27017'
     volumes:
       - mongodb_data:/data/db
 
