@@ -52,5 +52,13 @@ export class AuthService {
         if (!isValidLoginByUsername && !isValidLoginByEmail) {
             throw new ForbiddenException('Invalid credentials');
         }
+
+        const { _id } = isValidLoginByUsername ?? isValidLoginByEmail;
+        const user = await this.userModel.findById(_id);
+
+        const pwMatches = await argon.verify(user.password, dto.password);
+        if (!pwMatches) {
+            throw new ForbiddenException('Invalid password');
+        }
     }
 }
