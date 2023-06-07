@@ -1,11 +1,11 @@
 import {
     ConflictException,
     ForbiddenException,
-    Injectable
+    Injectable,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as argon from 'argon2';
-import { Model } from 'mongoose';
+import { Document, Model } from 'mongoose';
 import { User } from '../user/user.model';
 import { LoginDto, RegisterDto } from './dto';
 
@@ -14,6 +14,14 @@ export class AuthService {
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<User>,
     ) {}
+
+    private dropPassword(user: Document) {
+        const { password, ...noPasswordField } = user.toObject({
+            versionKey: false,
+        });
+        void password;
+        return noPasswordField;
+    }
 
     async register(dto: RegisterDto) {
         const usernameTaken = await this.userModel.exists({
@@ -30,12 +38,8 @@ export class AuthService {
 
         const hash = await argon.hash(dto.password);
         const newUser = new this.userModel({ ...dto, password: hash });
-        const document = await newUser.save();
-        const { password, ...result } = document.toObject({
-            versionKey: false,
-        });
-        void password;
-        return result;
+        const user = await newUser.save();
+        return this.dropPassword(user);
     }
 
     async login(dto: LoginDto) {
