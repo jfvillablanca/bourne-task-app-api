@@ -60,5 +60,7 @@ export class AuthService {
         if (!pwMatches) {
             throw new ForbiddenException('Invalid password');
         }
+
+        return this.dropPassword(user);
     }
 }
