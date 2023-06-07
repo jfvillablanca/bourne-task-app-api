@@ -10,7 +10,6 @@ import { AuthService } from './auth.service';
 
 describe('AuthController', () => {
     let authController: AuthController;
-    let authService: AuthService;
     let mongod: MongoMemoryServer;
     let mongoConnection: Connection;
     let userModel: Model<User>;
@@ -30,7 +29,6 @@ describe('AuthController', () => {
         }).compile();
 
         authController = module.get<AuthController>(AuthController);
-        authService = module.get<AuthService>(AuthService);
     });
 
     afterAll(async () => {
