@@ -8,5 +8,12 @@ services:
     volumes:
       - mongodb_data:/data/db
 
+  test-watch:
+    build:
+      context: .
+      dockerfile: test.Dockerfile
+    volumes:
+      - .:/project
+
 volumes:
   mongodb_data:
