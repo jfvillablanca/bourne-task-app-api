@@ -87,6 +87,7 @@ describe('AuthController', () => {
             );
         });
     });
+
     describe('/login', () => {
         it('should throw an exception if username or email does not exist', async () => {
             await expect(
@@ -109,5 +110,16 @@ describe('AuthController', () => {
             ).rejects.toThrow(new ForbiddenException('Invalid password'));
         });
 
+        it('should return the user on successful login', async () => {
+            await authController.register(RegisterDTOStub());
+
+            const user = await authController.login(LoginDTOStub());
+            expect(user.username).toBe(LoginDTOStub().usernameOrEmail);
+            expect(user.email).toBe(
+                LoginDTOStub({ useEmail: true }).usernameOrEmail,
+            );
+            expect(user._id).toBeDefined();
+            expect(user.password).toBeUndefined();
+        });
     });
 });
