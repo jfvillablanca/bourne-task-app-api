@@ -1,57 +1,46 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
-      flake = false;
-    };
-    devshell.url = "github:numtide/devshell";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
+    systems.url = "github:nix-systems/default";
+    devenv.url = "github:cachix/devenv";
   };
 
-  outputs = { self, nixpkgs, flake-utils, devshell, ... }:
-    flake-utils.lib.eachDefaultSystem (system: {
-      devShell =
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ devshell.overlays.default ];
-            config.allowUnfree=true;
-          };
-        in
-        pkgs.devshell.mkShell {
-          name = "bourne-task-app-api";
-          commands = [
-            {
-              name = "node";
-              package = pkgs.nodejs_20;
-            }
-            {
-              name = "yarn";
-              package = pkgs.yarn;
-            }
-            {
-              name = "nest";
-              package = pkgs.nest-cli;
-            }
-            {
-              name = "insomnia";
-              package = pkgs.insomnia;
-            }
-            {
-              name = "docker";
-              package = pkgs.docker;
-            }
-            {
-              name = "docker-compose";
-              package = pkgs.docker-compose;
-            }
-            {
-              name = "mongodb-compass";
-              package = pkgs.mongodb-compass;
-            }
-          ];
-          env = [ ];
-        };
-    });
+  outputs = { self, nixpkgs, devenv, systems, ... } @ inputs:
+    let
+      forEachSystem = nixpkgs.lib.genAttrs (import systems);
+    in
+    {
+      devShells = forEachSystem
+        (system:
+          let
+            pkgs = import nixpkgs {
+              inherit system;
+              config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [
+                "mongodb-compass"
+              ];
+            };
+          in
+          {
+            default = devenv.lib.mkShell {
+              inherit inputs pkgs;
+              modules = [
+                {
+                  packages = with pkgs; [
+                    nodejs_20
+                    yarn
+                    nest-cli
+                    insomnia
+                    docker
+                    docker-compose
+                    mongodb-compass
+                  ];
+
+                  enterShell = ''
+                    yarn install
+                  '';
+                }
+              ];
+            };
+          });
+    };
 }
