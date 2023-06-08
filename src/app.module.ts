@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
-
-const connectionString = 'mongodb://localhost:27018/bourne-task-app';
+import { mongooseConfig } from './config/database.config';
 
 @Module({
-    imports: [MongooseModule.forRoot(connectionString), AuthModule],
+    imports: [
+        ConfigModule.forRoot({ isGlobal: true }),
+        MongooseModule.forRootAsync(mongooseConfig()),
+        AuthModule,
+    ],
 })
 export class AppModule {}
