@@ -8,7 +8,7 @@
 - [Installation](#installation)
   - [Nix Dev Environment](#nix-dev-environment)
 - [Development](#development)
-  - [MongoDB Playground](#mongodb-playground)
+  - [MongoDB instance during development](#mongodb-instance-during-development)
 - [Testing](#testing)
   - [Unit Tests](#unit-tests)
   - [End-to-end Tests](#end-to-end-tests)
@@ -46,6 +46,8 @@ $ nix develop
 
 ## Development <a name="development"></a>
 
+- Prerequisite: `docker`
+
 ```bash
 # development
 $ yarn run start
@@ -53,17 +55,9 @@ $ yarn run start
 # watch mode
 $ yarn run start:dev
 ```
+### MongoDB instance during development <a name="mongodb-instance-during-development"></a>
 
-### MongoDB Playground <a name="mongodb-playground"></a>
-
-- Prerequisite: `docker`
-- Make sure that you have a MongoDB instance running on port 27017 before starting the application in development mode.
-
-```bash
-# Good thing we can easily spin one up with a docker container, just run (in detached mode)
-$ docker compose up mongodb-playground -d
-```
-
+- A MongoDB docker container will be instantiated when you run `yarn start`.
 - Then you can use Insomnia/Postman to make your HTTP requests and check the database with Mongo Shell or MongoDB Compass.
 
 ## Testing <a name="testing"></a>
@@ -79,8 +73,6 @@ $ yarn run test:cov
 ### Unit Tests <a name="unit-tests"></a>
 
 - The tests uses `mongodb-memory-server` which spins up a `mongod` instance and holds data in memory.
-
-  - You could get away with running `yarn start:dev` out of the box and `mongodb-memory-server` will download a mongodb binary based on your operating system.
 
 - In the rare case that your operating system does not have a [prebuilt binary for mongodb](https://nodkz.github.io/mongodb-memory-server/docs/guides/supported-systems/) such as Alpine Linux or NixOS (the machine that I use 💪)
 
