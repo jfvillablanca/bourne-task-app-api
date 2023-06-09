@@ -186,4 +186,41 @@ describe('AppController (e2e)', () => {
             });
         });
     });
+
+    describe('User', () => {
+        beforeAll(async () => {
+            await pactum
+                .spec()
+                .post('/register')
+                .withBody(RegisterDTOStub())
+                .expectStatus(HttpStatus.CREATED);
+
+            await pactum
+                .spec()
+                .post('/login')
+                .withBody(LoginDTOStub())
+                .expectStatus(HttpStatus.OK)
+                .stores('userAccessToken', 'access_token');
+        });
+
+        describe('Get me', () => {
+            it('should get current user', () => {
+                return pactum
+                    .spec()
+                    .get('/users/me')
+                    .withHeaders({
+                        Authorization: 'Bearer $S{userAccessToken}',
+                    })
+                    .expectStatus(HttpStatus.OK);
+            });
+        });
+
+        describe('Update user', () => {
+            it.todo('should edit user');
+        });
+
+        describe('Delete user', () => {
+            it.todo('should delete user');
+        });
+    });
 });
