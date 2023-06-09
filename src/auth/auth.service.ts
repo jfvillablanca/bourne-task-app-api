@@ -3,16 +3,21 @@ import {
     ForbiddenException,
     Injectable,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as argon from 'argon2';
 import { Document, Model } from 'mongoose';
 import { User } from '../user/user.model';
+import { JWT_SECRET } from './constants';
 import { LoginDto, RegisterDto } from './dto';
 
 @Injectable()
 export class AuthService {
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<User>,
+        private jwt: JwtService,
+        private configService: ConfigService,
     ) {}
 
     private dropPassword(user: Document) {
@@ -39,7 +44,11 @@ export class AuthService {
         const hash = await argon.hash(dto.password);
         const newUser = new this.userModel({ ...dto, password: hash });
         const user = await newUser.save();
-        return this.dropPassword(user);
+
+        return this.signToken({
+            sub: user._id.toString(),
+            username: user.username,
+        });
     }
 
     async login(dto: LoginDto) {
@@ -62,5 +71,24 @@ export class AuthService {
         }
 
         return this.dropPassword(user);
+    async signToken({
+        sub,
+        username,
+    }: {
+        sub: string;
+        username: string;
+    }): Promise<{ access_token: string }> {
+        const payload = {
+            sub,
+            username,
+        };
+        const token = await this.jwt.signAsync(payload, {
+            expiresIn: '15m',
+            secret: this.configService.get(JWT_SECRET),
+        });
+
+        return {
+            access_token: token,
+        };
     }
 }
