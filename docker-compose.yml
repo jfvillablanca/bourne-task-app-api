@@ -4,9 +4,15 @@ services:
     image: mongo
     container_name: mongodb-playground
     ports:
-      - '27018:27017'
+      - '27017:27017'
     volumes:
       - mongodb_data:/data/db
+
+  test-e2e-db:
+    image: mongo
+    container_name: test-e2e-db
+    ports:
+      - '27018:27017'
 
   test-watch:
     build:
