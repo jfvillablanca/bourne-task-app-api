@@ -43,5 +43,93 @@ describe('AppController (e2e)', () => {
         }
     });
 
+    describe('Auth', () => {
+        describe('register', () => {
+            it('should throw an error if username is empty during registration', () => {
+                return pactum
+                    .spec()
+                    .post('/register')
+                    .withBody({ ...RegisterDTOStub(), username: '' })
+                    .expectStatus(HttpStatus.BAD_REQUEST);
+            });
+
+            it('should throw an error if email is empty during registration', () => {
+                return pactum
+                    .spec()
+                    .post('/register')
+                    .withBody({ ...RegisterDTOStub(), email: '' })
+                    .expectStatus(HttpStatus.BAD_REQUEST);
+            });
+
+            it('should throw an error if password is empty during registration', () => {
+                return pactum
+                    .spec()
+                    .post('/register')
+                    .withBody({ ...RegisterDTOStub(), password: '' })
+                    .expectStatus(HttpStatus.BAD_REQUEST);
+            });
+
+            it('should allow registration without an email', () => {
+                const dto = RegisterDTOStub();
+                delete dto.email;
+                return pactum
+                    .spec()
+                    .post('/register')
+                    .withBody(dto)
+                    .expectStatus(HttpStatus.CREATED);
+            });
+
+            it('should throw an error if username is already taken', async () => {
+                const dto = {
+                    ...RegisterDTOStub(),
+                    username: 'unique_username',
+                };
+                delete dto.email;
+
+                await pactum
+                    .spec()
+                    .post('/register')
+                    .withBody(dto)
+                    .expectStatus(HttpStatus.CREATED);
+                return pactum
+                    .spec()
+                    .post('/register')
+                    .withBody(dto)
+                    .expectStatus(HttpStatus.CONFLICT);
+            });
+
+            it('should throw an error if email is already taken', async () => {
+                const firstDto = {
+                    ...RegisterDTOStub(),
+                    username: 'first',
+                    email: 'reused@email.com',
+                };
+
+                const secondDto = {
+                    ...RegisterDTOStub(),
+                    username: 'second',
+                    email: 'reused@email.com',
+                };
+
+                await pactum
+                    .spec()
+                    .post('/register')
+                    .withBody(firstDto)
+                    .expectStatus(HttpStatus.CREATED);
+                return pactum
+                    .spec()
+                    .post('/register')
+                    .withBody(secondDto)
+                    .expectStatus(HttpStatus.CONFLICT);
+            });
+
+            it('should be able to register if form fields are valid', () => {
+                return pactum
+                    .spec()
+                    .post('/register')
+                    .withBody(RegisterDTOStub())
+                    .expectStatus(HttpStatus.CREATED);
+            });
+        });
     });
 });
