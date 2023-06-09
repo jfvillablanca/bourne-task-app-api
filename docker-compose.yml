@@ -14,10 +14,11 @@ services:
     ports:
       - '27018:27017'
 
-  test-watch:
+  test-unit:
     build:
       context: .
       dockerfile: test.Dockerfile
+    container_name: test-unit
     volumes:
       - .:/project
 

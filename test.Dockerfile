@@ -15,4 +15,4 @@ COPY . /project
 
 RUN yarn install --frozen-lockfile
 
-ENTRYPOINT ["yarn", "run", "test:watch"]
+ENTRYPOINT ["yarn", "run", "_test"]
