@@ -131,5 +131,59 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.CREATED);
             });
         });
+
+        describe('login', () => {
+            it('should throw an error if username or email does not exist', async () => {
+                await pactum
+                    .spec()
+                    .post('/login')
+                    .withBody(LoginDTOStub({ useEmail: true }))
+                    .expectStatus(HttpStatus.FORBIDDEN);
+
+                await pactum
+                    .spec()
+                    .post('/login')
+                    .withBody(LoginDTOStub({ useEmail: false }))
+                    .expectStatus(HttpStatus.FORBIDDEN);
+            });
+
+            it('should throw an error if password is incorrect', async () => {
+                const registerDto = {
+                    ...RegisterDTOStub(),
+                    password: 'correct-password',
+                };
+                const loginDto = {
+                    ...LoginDTOStub(),
+                    password: 'incorrect-password',
+                };
+
+                await pactum
+                    .spec()
+                    .post('/register')
+                    .withBody(registerDto)
+                    .expectStatus(HttpStatus.CREATED);
+
+                return pactum
+                    .spec()
+                    .post('/login')
+                    .withBody(loginDto)
+                    .expectStatus(HttpStatus.FORBIDDEN)
+                    .inspect();
+            });
+
+            it('should be able to login if valid credentials are provided', async () => {
+                await pactum
+                    .spec()
+                    .post('/register')
+                    .withBody(RegisterDTOStub())
+                    .expectStatus(HttpStatus.CREATED);
+
+                return pactum
+                    .spec()
+                    .post('/login')
+                    .withBody(LoginDTOStub())
+                    .expectStatus(HttpStatus.OK);
+            });
+        });
     });
 });
