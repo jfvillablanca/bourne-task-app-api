@@ -10,7 +10,8 @@
 - [Development](#development)
   - [MongoDB Playground](#mongodb-playground)
 - [Testing](#testing)
-  - [Running Watched Tests](#running-watched-tests)
+  - [Unit Tests](#unit-tests)
+  - [End-to-end Tests](#end-to-end-tests)
 - [Production](#production)
 - [Contribute](#contribute)
 - [License](#license)
@@ -53,9 +54,10 @@ $ yarn run start
 $ yarn run start:dev
 ```
 
-### MongoDB Playground: <a name="mongodb-playground"></a>
+### MongoDB Playground <a name="mongodb-playground"></a>
 
-- Make sure that you have a MongoDB instance running on port 27018 before starting the application in development mode.
+- Prerequisite: `docker`
+- Make sure that you have a MongoDB instance running on port 27017 before starting the application in development mode.
 
 ```bash
 # Good thing we can easily spin one up with a docker container, just run (in detached mode)
@@ -70,14 +72,11 @@ $ docker compose up mongodb-playground -d
 # unit tests
 $ yarn run test
 
-# e2e tests
-$ yarn run test:e2e
-
 # test coverage
 $ yarn run test:cov
 ```
 
-### Running Watched Tests: <a name="running-watched-tests"></a>
+### Unit Tests <a name="unit-tests"></a>
 
 - The tests uses `mongodb-memory-server` which spins up a `mongod` instance and holds data in memory.
 
@@ -93,6 +92,18 @@ $ docker compose build test-watch
 
 # Run the container. This will be equivalent to 'jest --watch'
 $ docker compose run test-watch
+```
+
+### End-to-end Tests <a name="end-to-end-tests"></a>
+
+- Prerequisite: `docker`
+- We have to use an actual MongoDB instance for end-to-end testing for this one but we have to isolate it from our MongoDB playground.
+- The file `.env.test` contains the connection string to our test database, which is declared as a service in the `docker-compose.yml`, named: `test-e2e-db`.
+    - The port used is `27018` instead of `27017` that is used by our MongoDB playground instance in order to not have any conflicts.
+
+```bash
+# This will automatically run all the docker setup if no e2e test instance of mongodb is running
+$ yarn test:e2e
 ```
 
 ## Production <a name="production"></a>
