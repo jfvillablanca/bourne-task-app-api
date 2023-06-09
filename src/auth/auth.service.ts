@@ -7,7 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as argon from 'argon2';
-import { Document, Model } from 'mongoose';
+import { Model } from 'mongoose';
 import { User } from '../user/user.model';
 import { JWT_SECRET } from './constants';
 import { LoginDto, RegisterDto } from './dto';
@@ -19,14 +19,6 @@ export class AuthService {
         private jwt: JwtService,
         private configService: ConfigService,
     ) {}
-
-    private dropPassword(user: Document) {
-        const { password, ...noPasswordField } = user.toObject({
-            versionKey: false,
-        });
-        void password;
-        return noPasswordField;
-    }
 
     async register(dto: RegisterDto) {
         const usernameTaken = await this.userModel.exists({
@@ -70,7 +62,12 @@ export class AuthService {
             throw new ForbiddenException('Invalid password');
         }
 
-        return this.dropPassword(user);
+        return this.signToken({
+            sub: user._id.toString(),
+            username: user.username,
+        });
+    }
+
     async signToken({
         sub,
         username,
