@@ -24,8 +24,9 @@ export class ProjectService {
         return projects;
     }
 
-    findOne(id: number) {
-        return `This action returns a #${id} project`;
+    async findOne(projectId: string) {
+        const foundProject = await this.projectModel.findById(projectId).exec();
+        return foundProject;
     }
 
     update(id: number, updateProjectDto: UpdateProjectDto) {
