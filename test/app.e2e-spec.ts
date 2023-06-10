@@ -4,7 +4,7 @@ import { Test } from '@nestjs/testing';
 import { Connection } from 'mongoose';
 import * as pactum from 'pactum';
 import { AppModule } from './../src/app.module';
-import { LoginDTOStub, RegisterDTOStub } from './stubs/auth.dto.stub';
+import { LoginDTOStub, RegisterDTOStub } from './stubs';
 
 describe('AppController (e2e)', () => {
     let app: INestApplication;
