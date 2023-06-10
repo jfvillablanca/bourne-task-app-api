@@ -6,13 +6,17 @@ import { Project } from './entities';
 
 @Injectable()
 export class ProjectService {
-    create(createProjectDto: CreateProjectDto) {
-        return 'This action adds a new project';
     constructor(
         @InjectModel(Project.name)
         private readonly projectModel: Model<Project>,
     ) {}
 
+    async create(userId: string, createProjectDto: CreateProjectDto) {
+        const dto = { ...createProjectDto, ownerId: userId };
+        const newProject = await new this.projectModel(dto).save();
+        return {
+            data: newProject,
+        };
     }
 
     async findAll(userId: string) {
