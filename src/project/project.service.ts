@@ -12,9 +12,15 @@ export class ProjectService {
     ) {}
 
     async create(userId: string, createProjectDto: CreateProjectDto) {
-        const dto = { ...createProjectDto, ownerId: userId };
-        const newProject = await new this.projectModel(dto).save();
-        return newProject;
+        const projectDetails = { ...createProjectDto, ownerId: userId };
+        try {
+            const newProject = await new this.projectModel(
+                projectDetails,
+            ).save();
+            return newProject;
+        } catch (err) {
+            throw new Error(err);
+        }
     }
 
     async findAll(userId: string) {
