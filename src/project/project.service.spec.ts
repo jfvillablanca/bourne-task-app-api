@@ -71,4 +71,17 @@ describe('ProjectService', () => {
             expect(projects[0].description).toBe(dto.description);
         });
     });
+
+    describe('Create project', () => {
+        it('should be able to create a project and save to database', async () => {
+            const ownerId = new Types.ObjectId().toString();
+            const dto = CreateProjectDTOStub();
+
+            const { data: newProject } = await service.create(ownerId, dto);
+
+            expect(newProject.ownerId.toString()).toBe(ownerId);
+            expect(newProject.title).toBe(dto.title);
+            expect(newProject.description).toBe(dto.description);
+        });
+    });
 });
