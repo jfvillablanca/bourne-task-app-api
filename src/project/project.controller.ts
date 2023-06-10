@@ -1,27 +1,38 @@
 import {
+    Body,
     Controller,
     Get,
-    Post,
-    Body,
     Patch,
+    HttpCode,
+    HttpStatus,
     Param,
     Delete,
+    Post,
+    UseGuards,
 } from '@nestjs/common';
-import { ProjectService } from './project.service';
+import { GetUser } from '../auth/decorator';
+import { JwtGuard } from '../auth/guard';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
+import { ProjectService } from './project.service';
 
+@UseGuards(JwtGuard)
 @Controller('projects')
 export class ProjectController {
     constructor(private readonly projectService: ProjectService) {}
 
     @Post()
-    create(@Body() createProjectDto: CreateProjectDto) {
-        return this.projectService.create(createProjectDto);
+    @HttpCode(HttpStatus.CREATED)
+    create(
+        @GetUser('id') userId: string,
+        @Body() createProjectDto: CreateProjectDto,
+    ) {
+        return this.projectService.create(userId, createProjectDto);
     }
 
     @Get()
-    findAll() {
-        return this.projectService.findAll();
+    @HttpCode(HttpStatus.OK)
+    findAll(@GetUser('id') userId: string) {
+        return this.projectService.findAll(userId);
     }
 
     @Get(':id')
