@@ -2,6 +2,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { connect, Connection, Model, Types } from 'mongoose';
+import { CreateProjectDTOStub } from '../../test/stubs';
 import { Project, ProjectSchema } from './entities';
 import { ProjectService } from './project.service';
 
@@ -44,4 +45,30 @@ describe('ProjectService', () => {
         }
     });
 
+    describe('Find project', () => {
+        it('should return an empty array of projects for user with no projects', async () => {
+            const ownerId = new Types.ObjectId().toString();
+
+            const {
+                data: { projects },
+            } = await service.findAll(ownerId);
+
+            expect(projects).toStrictEqual([]);
+        });
+
+        it('should find a project owned by a user', async () => {
+            const ownerId = new Types.ObjectId().toString();
+            const dto = { ...CreateProjectDTOStub(), ownerId };
+            await new projectModel(dto).save();
+
+            const {
+                data: { userId, projects },
+            } = await service.findAll(ownerId);
+
+            expect(userId).toBe(ownerId);
+            expect(projects.length).toBe(1);
+            expect(projects[0].title).toBe(dto.title);
+            expect(projects[0].description).toBe(dto.description);
+        });
+    });
 });
