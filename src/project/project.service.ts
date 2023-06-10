@@ -1,14 +1,30 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
+import { Project } from './entities';
 
 @Injectable()
 export class ProjectService {
     create(createProjectDto: CreateProjectDto) {
         return 'This action adds a new project';
+    constructor(
+        @InjectModel(Project.name)
+        private readonly projectModel: Model<Project>,
+    ) {}
+
     }
 
-    findAll() {
-        return `This action returns all project`;
+    async findAll(userId: string) {
+        const projects = await this.projectModel
+            .find({ ownerId: userId })
+            .exec();
+        return {
+            data: {
+                userId,
+                projects,
+            },
+        };
     }
 
     findOne(id: number) {
