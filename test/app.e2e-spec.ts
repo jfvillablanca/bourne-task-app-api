@@ -199,7 +199,7 @@ describe('AppController (e2e)', () => {
                 .post('/login')
                 .withBody(LoginDTOStub())
                 .expectStatus(HttpStatus.OK)
-                .stores('userAccessToken', 'access_token');
+                .stores('ownerAccessToken', 'access_token');
         });
 
         describe('Get me', () => {
@@ -208,7 +208,7 @@ describe('AppController (e2e)', () => {
                     .spec()
                     .get('/users/me')
                     .withHeaders({
-                        Authorization: 'Bearer $S{userAccessToken}',
+                        Authorization: 'Bearer $S{ownerAccessToken}',
                     })
                     .expectStatus(HttpStatus.OK);
             });
@@ -237,7 +237,7 @@ describe('AppController (e2e)', () => {
                 .post('/login')
                 .withBody(owner)
                 .expectStatus(HttpStatus.OK)
-                .stores('userAccessToken', 'access_token');
+                .stores('ownerAccessToken', 'access_token');
         });
 
         describe('Create project', () => {
@@ -247,7 +247,7 @@ describe('AppController (e2e)', () => {
                     .spec()
                     .post('/projects')
                     .withHeaders({
-                        Authorization: 'Bearer $S{userAccessToken}',
+                        Authorization: 'Bearer $S{ownerAccessToken}',
                     })
                     .withBody(dto)
                     .expectStatus(HttpStatus.BAD_REQUEST);
@@ -259,7 +259,7 @@ describe('AppController (e2e)', () => {
                     .spec()
                     .post('/projects')
                     .withHeaders({
-                        Authorization: 'Bearer $S{userAccessToken}',
+                        Authorization: 'Bearer $S{ownerAccessToken}',
                     })
                     .withBody(dto)
                     .expectStatus(HttpStatus.CREATED);
@@ -273,7 +273,7 @@ describe('AppController (e2e)', () => {
                     .spec()
                     .post('/projects')
                     .withHeaders({
-                        Authorization: 'Bearer $S{userAccessToken}',
+                        Authorization: 'Bearer $S{ownerAccessToken}',
                     })
                     .withBody(dto)
                     .expectStatus(HttpStatus.CREATED)
@@ -285,7 +285,7 @@ describe('AppController (e2e)', () => {
                     .spec()
                     .get('/projects')
                     .withHeaders({
-                        Authorization: 'Bearer $S{userAccessToken}',
+                        Authorization: 'Bearer $S{ownerAccessToken}',
                     })
                     .expectStatus(HttpStatus.OK)
                     .expectJsonLength(1);
@@ -297,7 +297,7 @@ describe('AppController (e2e)', () => {
                     .get('/projects/{id}')
                     .withPathParams('id', 'bad_id')
                     .withHeaders({
-                        Authorization: 'Bearer $S{userAccessToken}',
+                        Authorization: 'Bearer $S{ownerAccessToken}',
                     })
                     .expectStatus(HttpStatus.NOT_FOUND);
             });
@@ -308,7 +308,7 @@ describe('AppController (e2e)', () => {
                     .get('/projects/{id}')
                     .withPathParams('id', '$S{projectId}')
                     .withHeaders({
-                        Authorization: 'Bearer $S{userAccessToken}',
+                        Authorization: 'Bearer $S{ownerAccessToken}',
                     })
                     .expectStatus(HttpStatus.OK)
                     .expectBodyContains('$S{projectId}');
