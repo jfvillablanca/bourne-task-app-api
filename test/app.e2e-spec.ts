@@ -167,8 +167,7 @@ describe('AppController (e2e)', () => {
                     .spec()
                     .post('/login')
                     .withBody(loginDto)
-                    .expectStatus(HttpStatus.FORBIDDEN)
-                    .inspect();
+                    .expectStatus(HttpStatus.FORBIDDEN);
             });
 
             it('should be able to login if valid credentials are provided', async () => {
