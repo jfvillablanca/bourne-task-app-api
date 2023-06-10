@@ -264,5 +264,43 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.CREATED);
             });
         });
+
+        describe('Find project', () => {
+            beforeEach(async () => {
+                const dto = CreateProjectDTOStub();
+                await pactum
+                    .spec()
+                    .post('/projects')
+                    .withHeaders({
+                        Authorization: 'Bearer $S{userAccessToken}',
+                    })
+                    .withBody(dto)
+                    .expectStatus(HttpStatus.CREATED)
+                    .stores('projectId', '_id');
+            });
+
+            it('should find all projects by a user', () => {
+                return pactum
+                    .spec()
+                    .get('/projects')
+                    .withHeaders({
+                        Authorization: 'Bearer $S{userAccessToken}',
+                    })
+                    .expectStatus(HttpStatus.OK)
+                    .expectJsonLength(1);
+            });
+
+            it('should find a project by project id', () => {
+                return pactum
+                    .spec()
+                    .get('/projects/{id}')
+                    .withPathParams('id', '$S{projectId}')
+                    .withHeaders({
+                        Authorization: 'Bearer $S{userAccessToken}',
+                    })
+                    .expectStatus(HttpStatus.OK)
+                    .expectBodyContains('$S{projectId}');
+            });
+        });
     });
 });
