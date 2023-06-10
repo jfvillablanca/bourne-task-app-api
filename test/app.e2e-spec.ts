@@ -290,6 +290,17 @@ describe('AppController (e2e)', () => {
                     .expectJsonLength(1);
             });
 
+            it('should return 404 when retrieving non-existent project', () => {
+                return pactum
+                    .spec()
+                    .get('/projects/{id}')
+                    .withPathParams('id', 'bad_id')
+                    .withHeaders({
+                        Authorization: 'Bearer $S{userAccessToken}',
+                    })
+                    .expectStatus(HttpStatus.NOT_FOUND);
+            });
+
             it('should find a project by project id', () => {
                 return pactum
                     .spec()

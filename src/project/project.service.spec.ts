@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MongoMemoryServer } from 'mongodb-memory-server';
@@ -64,6 +65,12 @@ describe('ProjectService', () => {
             expect(projects.length).toBe(1);
             expect(projects[0].title).toBe(dto.title);
             expect(projects[0].description).toBe(dto.description);
+        });
+
+        it('should throw an error when retrieving non-existent project', async () => {
+            await expect(service.findOne('bad_id')).rejects.toThrow(
+                new NotFoundException('Project not found'),
+            );
         });
 
         it('should find a project by project id', async () => {
