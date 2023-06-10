@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
@@ -31,8 +31,14 @@ export class ProjectService {
     }
 
     async findOne(projectId: string) {
-        const foundProject = await this.projectModel.findById(projectId).exec();
-        return foundProject;
+        try {
+            const foundProject = await this.projectModel
+                .findById(projectId)
+                .exec();
+            return foundProject;
+        } catch {
+            return Promise.reject(new NotFoundException('Project not found'));
+        }
     }
 
     update(id: number, updateProjectDto: UpdateProjectDto) {
