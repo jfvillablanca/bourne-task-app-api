@@ -8,7 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as argon from 'argon2';
 import { Model } from 'mongoose';
-import { User } from '../user/user.model';
+import { User } from '../user/entities';
 import { JWT_SECRET } from './constants';
 import { LoginDto, RegisterDto } from './dto';
 
