@@ -4,7 +4,7 @@ import { Test } from '@nestjs/testing';
 import { Connection } from 'mongoose';
 import * as pactum from 'pactum';
 import { AppModule } from './../src/app.module';
-import { LoginDTOStub, RegisterDTOStub } from './stubs';
+import { CreateProjectDTOStub, LoginDTOStub, RegisterDTOStub } from './stubs';
 
 describe('AppController (e2e)', () => {
     let app: INestApplication;
@@ -220,6 +220,49 @@ describe('AppController (e2e)', () => {
 
         describe('Delete user', () => {
             it.todo('should delete user');
+        });
+    });
+
+    describe('Projects', () => {
+        const owner = LoginDTOStub();
+        beforeEach(async () => {
+            await pactum
+                .spec()
+                .post('/register')
+                .withBody(RegisterDTOStub())
+                .expectStatus(HttpStatus.CREATED);
+
+            await pactum
+                .spec()
+                .post('/login')
+                .withBody(owner)
+                .expectStatus(HttpStatus.OK)
+                .stores('userAccessToken', 'access_token');
+        });
+
+        describe('Create project', () => {
+            it('should get empty array of projects from a new user', () => {
+                return pactum
+                    .spec()
+                    .get('/projects')
+                    .withHeaders({
+                        Authorization: 'Bearer $S{userAccessToken}',
+                    })
+                    .expectStatus(HttpStatus.OK)
+                    .expectBodyContains([]);
+            });
+
+            it('should create a project for the current user', () => {
+                const dto = CreateProjectDTOStub();
+                return pactum
+                    .spec()
+                    .post('/projects')
+                    .withHeaders({
+                        Authorization: 'Bearer $S{userAccessToken}',
+                    })
+                    .withBody(dto)
+                    .expectStatus(HttpStatus.CREATED);
+            });
         });
     });
 });
