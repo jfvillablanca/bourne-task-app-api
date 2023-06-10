@@ -241,15 +241,16 @@ describe('AppController (e2e)', () => {
         });
 
         describe('Create project', () => {
-            it('should get empty array of projects from a new user', () => {
+            it('should throw an error on invalid project value', () => {
+                const dto = 'bad_body_value';
                 return pactum
                     .spec()
-                    .get('/projects')
+                    .post('/projects')
                     .withHeaders({
                         Authorization: 'Bearer $S{userAccessToken}',
                     })
-                    .expectStatus(HttpStatus.OK)
-                    .expectBodyContains([]);
+                    .withBody(dto)
+                    .expectStatus(HttpStatus.BAD_REQUEST);
             });
 
             it('should create a project for the current user', () => {

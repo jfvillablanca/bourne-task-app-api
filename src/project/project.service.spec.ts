@@ -87,6 +87,13 @@ describe('ProjectService', () => {
     });
 
     describe('Create project', () => {
+        it('should throw an error on bad project body', async () => {
+            const ownerId = new Types.ObjectId().toString();
+            const dto = { ...CreateProjectDTOStub(), title: '' };
+
+            await expect(service.create(ownerId, dto)).rejects.toThrow();
+        });
+
         it('should be able to create a project and save to database', async () => {
             const ownerId = new Types.ObjectId().toString();
             const dto = CreateProjectDTOStub();
