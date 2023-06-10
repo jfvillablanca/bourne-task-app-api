@@ -49,23 +49,18 @@ describe('ProjectService', () => {
         it('should return an empty array of projects for user with no projects', async () => {
             const ownerId = new Types.ObjectId().toString();
 
-            const {
-                data: { projects },
-            } = await service.findAll(ownerId);
+            const projects = await service.findAll(ownerId);
 
             expect(projects).toStrictEqual([]);
         });
 
-        it('should find a project owned by a user', async () => {
+        it('should find a single project in the projects array owned by the user', async () => {
             const ownerId = new Types.ObjectId().toString();
             const dto = { ...CreateProjectDTOStub(), ownerId };
             await new projectModel(dto).save();
 
-            const {
-                data: { userId, projects },
-            } = await service.findAll(ownerId);
+            const projects = await service.findAll(ownerId);
 
-            expect(userId).toBe(ownerId);
             expect(projects.length).toBe(1);
             expect(projects[0].title).toBe(dto.title);
             expect(projects[0].description).toBe(dto.description);
@@ -77,7 +72,7 @@ describe('ProjectService', () => {
             const ownerId = new Types.ObjectId().toString();
             const dto = CreateProjectDTOStub();
 
-            const { data: newProject } = await service.create(ownerId, dto);
+            const newProject = await service.create(ownerId, dto);
 
             expect(newProject.ownerId.toString()).toBe(ownerId);
             expect(newProject.title).toBe(dto.title);

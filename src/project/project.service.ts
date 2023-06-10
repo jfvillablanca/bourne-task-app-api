@@ -14,21 +14,14 @@ export class ProjectService {
     async create(userId: string, createProjectDto: CreateProjectDto) {
         const dto = { ...createProjectDto, ownerId: userId };
         const newProject = await new this.projectModel(dto).save();
-        return {
-            data: newProject,
-        };
+        return newProject;
     }
 
     async findAll(userId: string) {
         const projects = await this.projectModel
             .find({ ownerId: userId })
             .exec();
-        return {
-            data: {
-                userId,
-                projects,
-            },
-        };
+        return projects;
     }
 
     findOne(id: number) {
