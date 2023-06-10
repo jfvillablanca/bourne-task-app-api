@@ -65,6 +65,18 @@ describe('ProjectService', () => {
             expect(projects[0].title).toBe(dto.title);
             expect(projects[0].description).toBe(dto.description);
         });
+
+        it('should find a project by project id', async () => {
+            const ownerId = new Types.ObjectId().toString();
+            const dto = { ...CreateProjectDTOStub(), ownerId };
+            await new projectModel(dto).save();
+            const projects = await service.findAll(ownerId);
+            const lookForProjectId = projects[0].id;
+
+            const foundProject = await service.findOne(lookForProjectId);
+
+            expect(foundProject.id).toBe(lookForProjectId);
+        });
     });
 
     describe('Create project', () => {
