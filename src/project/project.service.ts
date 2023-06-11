@@ -41,8 +41,22 @@ export class ProjectService {
         }
     }
 
-    update(id: number, updateProjectDto: UpdateProjectDto) {
-        return `This action updates a #${id} project`;
+    async update(
+        userId: string,
+        projectId: string,
+        updateProjectDto: UpdateProjectDto,
+    ) {
+        const projectDetails = { ...updateProjectDto, ownerId: userId };
+        try {
+            const updatedProject = await this.projectModel.findByIdAndUpdate(
+                projectId,
+                projectDetails,
+                { new: true },
+            );
+            return updatedProject;
+        } catch (err) {
+            throw new Error(err);
+        }
     }
 
     remove(id: number) {

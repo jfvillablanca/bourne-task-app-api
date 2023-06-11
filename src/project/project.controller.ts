@@ -2,11 +2,11 @@ import {
     Body,
     Controller,
     Get,
-    Patch,
     HttpCode,
     HttpStatus,
     Param,
     Delete,
+    Patch,
     Post,
     UseGuards,
 } from '@nestjs/common';
@@ -42,11 +42,13 @@ export class ProjectController {
     }
 
     @Patch(':id')
+    @HttpCode(HttpStatus.OK)
     update(
-        @Param('id') id: string,
+        @GetUser('id') userId: string,
+        @Param('id') projectId: string,
         @Body() updateProjectDto: UpdateProjectDto,
     ) {
-        return this.projectService.update(+id, updateProjectDto);
+        return this.projectService.update(userId, projectId, updateProjectDto);
     }
 
     @Delete(':id')
