@@ -1,11 +1,11 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     HttpCode,
     HttpStatus,
     Param,
-    Delete,
     Patch,
     Post,
     UseGuards,
@@ -52,7 +52,8 @@ export class ProjectController {
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.projectService.remove(+id);
+    @HttpCode(HttpStatus.NO_CONTENT)
+    remove(@GetUser('id') userId: string, @Param('id') projectId: string) {
+        return this.projectService.remove(userId, projectId);
     }
 }
