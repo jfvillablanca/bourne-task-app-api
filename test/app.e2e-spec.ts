@@ -3,7 +3,7 @@ import { getConnectionToken } from '@nestjs/mongoose';
 import { Test } from '@nestjs/testing';
 import { Connection } from 'mongoose';
 import * as pactum from 'pactum';
-import { CreateProjectDto } from '../src/project/dto';
+import { UpdateProjectDto } from '../src/project/dto';
 import { AppModule } from './../src/app.module';
 import { CreateProjectDTOStub, LoginDTOStub, RegisterDTOStub } from './stubs';
 
@@ -322,8 +322,14 @@ describe('AppController (e2e)', () => {
         });
 
         describe('Update project', () => {
-            let updatedProjectDto: CreateProjectDto;
+            let updatedProjectDto: UpdateProjectDto;
             let projectId: string;
+
+            let nonOwnerAccessToken: string;
+            const nonOwnerCredentials = {
+                username: 'hackerman',
+                email: 'hackerman@hack.com',
+            };
 
             beforeEach(async () => {
                 const dto = CreateProjectDTOStub();
@@ -340,6 +346,22 @@ describe('AppController (e2e)', () => {
                     .withBody(dto)
                     .expectStatus(HttpStatus.CREATED)
                     .returns('_id');
+
+                // Register a non-owner user
+                await pactum
+                    .spec()
+                    .post('/register')
+                    .withBody({ ...RegisterDTOStub(), ...nonOwnerCredentials })
+                    .expectStatus(HttpStatus.CREATED);
+                nonOwnerAccessToken = await pactum
+                    .spec()
+                    .post('/login')
+                    .withBody({
+                        ...LoginDTOStub(),
+                        usernameOrEmail: nonOwnerCredentials.username,
+                    })
+                    .expectStatus(HttpStatus.OK)
+                    .returns('access_token');
             });
 
             it('should be able to update the project details', () => {
@@ -356,25 +378,6 @@ describe('AppController (e2e)', () => {
             });
 
             it('should not allow updating project details if not project owner', async () => {
-                const nonOwnerCredentials = {
-                    username: 'hackerman',
-                    email: 'hackerman@hack.com',
-                };
-                await pactum
-                    .spec()
-                    .post('/register')
-                    .withBody({ ...RegisterDTOStub(), ...nonOwnerCredentials })
-                    .expectStatus(HttpStatus.CREATED);
-                const nonOwnerAccessToken = await pactum
-                    .spec()
-                    .post('/login')
-                    .withBody({
-                        ...LoginDTOStub(),
-                        usernameOrEmail: nonOwnerCredentials.username,
-                    })
-                    .expectStatus(HttpStatus.OK)
-                    .returns('access_token');
-
                 return pactum
                     .spec()
                     .patch('/projects/{id}')
