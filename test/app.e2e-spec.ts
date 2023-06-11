@@ -6,6 +6,7 @@ import * as pactum from 'pactum';
 import { UpdateProjectDto } from '../src/project/dto';
 import { AppModule } from './../src/app.module';
 import { CreateProjectDTOStub, LoginDTOStub, RegisterDTOStub } from './stubs';
+import { getUserIdWithToken } from './utils';
 
 describe('AppController (e2e)', () => {
     let app: INestApplication;
@@ -331,12 +332,21 @@ describe('AppController (e2e)', () => {
                 email: 'hackerman@hack.com',
             };
 
+            let collaboratorUserId: string;
+            let collaboratorAccessToken: string;
+            const collaboratorCredentials = {
+                username: 'collaborator',
+                email: 'collab@orator.com',
+            };
+
             beforeEach(async () => {
                 const dto = CreateProjectDTOStub();
                 updatedProjectDto = {
                     ...CreateProjectDTOStub(),
                     title: 'Updated title',
                 };
+
+                // Owner creates a new project
                 projectId = await pactum
                     .spec()
                     .post('/projects')
@@ -362,6 +372,30 @@ describe('AppController (e2e)', () => {
                     })
                     .expectStatus(HttpStatus.OK)
                     .returns('access_token');
+
+                // Register a collaborator user
+                await pactum
+                    .spec()
+                    .post('/register')
+                    .withBody({
+                        ...RegisterDTOStub(),
+                        ...collaboratorCredentials,
+                    })
+                    .expectStatus(HttpStatus.CREATED);
+                collaboratorAccessToken = await pactum
+                    .spec()
+                    .post('/login')
+                    .withBody({
+                        ...LoginDTOStub(),
+                        usernameOrEmail: collaboratorCredentials.username,
+                    })
+                    .expectStatus(HttpStatus.OK)
+                    .returns('access_token');
+
+                // Get collaborator's id
+                collaboratorUserId = getUserIdWithToken(
+                    collaboratorAccessToken,
+                );
             });
 
             it('should be able to update the project details', () => {
@@ -389,9 +423,39 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.FORBIDDEN);
             });
 
-            it.todo(
-                'should not allow updating project details if not a project collaborator',
-            );
+            it('should allow updating project details if user is project collaborator', async () => {
+                // Let owner add the collaborator to the collaborators list
+                const projectDtoWithCollaborator: UpdateProjectDto = {
+                    ...CreateProjectDTOStub(),
+                    collaborators: [collaboratorUserId],
+                };
+                await pactum
+                    .spec()
+                    .patch('/projects/{id}')
+                    .withPathParams('id', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(projectDtoWithCollaborator)
+                    .expectStatus(HttpStatus.OK);
+
+                // Collaborator makes edits on the Project
+                const updatedProjectByCollaborator: UpdateProjectDto = {
+                    ...CreateProjectDTOStub(),
+                    title: 'Edited by a collaborator',
+                };
+
+                return pactum
+                    .spec()
+                    .patch('/projects/{id}')
+                    .withPathParams('id', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${collaboratorAccessToken}`,
+                    })
+                    .withBody(updatedProjectByCollaborator)
+                    .expectStatus(HttpStatus.OK)
+                    .expectJsonMatch(updatedProjectByCollaborator);
+            });
         });
     });
 });
