@@ -355,9 +355,36 @@ describe('AppController (e2e)', () => {
                     .expectJsonMatch(updatedProjectDto);
             });
 
-            it.todo(
-                'should not allow updating project details if not project owner',
-            );
+            it('should not allow updating project details if not project owner', async () => {
+                const nonOwnerCredentials = {
+                    username: 'hackerman',
+                    email: 'hackerman@hack.com',
+                };
+                await pactum
+                    .spec()
+                    .post('/register')
+                    .withBody({ ...RegisterDTOStub(), ...nonOwnerCredentials })
+                    .expectStatus(HttpStatus.CREATED);
+                const nonOwnerAccessToken = await pactum
+                    .spec()
+                    .post('/login')
+                    .withBody({
+                        ...LoginDTOStub(),
+                        usernameOrEmail: nonOwnerCredentials.username,
+                    })
+                    .expectStatus(HttpStatus.OK)
+                    .returns('access_token');
+
+                return pactum
+                    .spec()
+                    .patch('/projects/{id}')
+                    .withPathParams('id', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${nonOwnerAccessToken}`,
+                    })
+                    .withBody(updatedProjectDto)
+                    .expectStatus(HttpStatus.FORBIDDEN);
+            });
 
             it.todo(
                 'should not allow updating project details if not a project collaborator',
