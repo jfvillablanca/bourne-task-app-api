@@ -4,6 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { connect, Connection, Model, Types } from 'mongoose';
 import { CreateProjectDTOStub } from '../../test/stubs';
+import { UpdateProjectDto } from './dto';
 import { Project, ProjectSchema } from './entities';
 import { ProjectService } from './project.service';
 
@@ -109,20 +110,23 @@ describe('ProjectService', () => {
     describe('Update project', () => {
         let ownerId: string;
         let nonOwnerId: string;
+        let collaboratorId: string;
         let projectId: string;
+        let updatedProjectDto: UpdateProjectDto;
         const initialProjectDto = CreateProjectDTOStub();
-        const updatedProjectDto = {
-            ...initialProjectDto,
-            title: 'Updated Title',
-        };
 
         beforeEach(async () => {
             ownerId = new Types.ObjectId(1).toString();
             nonOwnerId = new Types.ObjectId(2).toString();
+            collaboratorId = new Types.ObjectId(2).toString();
             projectId = (await service.create(ownerId, initialProjectDto)).id;
+            updatedProjectDto = {
+                ...initialProjectDto,
+                title: 'Updated Title',
+            };
         });
 
-        it('should be able to update project details given proper credentials', async () => {
+        it('should be able to update project details if owner credentials', async () => {
             const updatedProject = await service.update(
                 ownerId,
                 projectId,
@@ -135,6 +139,35 @@ describe('ProjectService', () => {
                 initialProjectDto.description,
             );
             expect(updatedProject.title).toBe(updatedProjectDto.title);
+        });
+
+        it('should be able to update project details if collaborator credentials', async () => {
+            // Let owner add the collaborator to the collaborators list
+            await service.update(ownerId, projectId, {
+                ...updatedProjectDto,
+                collaborators: [collaboratorId],
+            });
+
+            // Collaborator makes edits on the Project
+            updatedProjectDto = {
+                ...initialProjectDto,
+                title: 'Edited by a collaborator',
+            };
+            const updatedProject = await service.update(
+                collaboratorId,
+                projectId,
+                updatedProjectDto,
+            );
+
+            expect(updatedProject.ownerId.toString()).toBe(ownerId);
+            expect(updatedProject.id).toBe(projectId);
+            expect(updatedProject.description).toBe(
+                initialProjectDto.description,
+            );
+            expect(updatedProject.title).toBe(updatedProjectDto.title);
+            expect(updatedProject.collaborators.toString()).toBe(
+                [collaboratorId].toString(),
+            );
         });
 
         it('should throw a ForbiddenException when updating with improper credentials', async () => {
