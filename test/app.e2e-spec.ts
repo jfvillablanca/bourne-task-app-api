@@ -3,6 +3,7 @@ import { getConnectionToken } from '@nestjs/mongoose';
 import { Test } from '@nestjs/testing';
 import { Connection } from 'mongoose';
 import * as pactum from 'pactum';
+import { CreateProjectDto } from '../src/project/dto';
 import { AppModule } from './../src/app.module';
 import { CreateProjectDTOStub, LoginDTOStub, RegisterDTOStub } from './stubs';
 
@@ -225,6 +226,8 @@ describe('AppController (e2e)', () => {
 
     describe('Projects', () => {
         const owner = LoginDTOStub();
+        let ownerAccessToken: string;
+
         beforeEach(async () => {
             await pactum
                 .spec()
@@ -232,12 +235,12 @@ describe('AppController (e2e)', () => {
                 .withBody(RegisterDTOStub())
                 .expectStatus(HttpStatus.CREATED);
 
-            await pactum
+            ownerAccessToken = await pactum
                 .spec()
                 .post('/login')
                 .withBody(owner)
                 .expectStatus(HttpStatus.OK)
-                .stores('ownerAccessToken', 'access_token');
+                .returns('access_token');
         });
 
         describe('Create project', () => {
@@ -247,7 +250,7 @@ describe('AppController (e2e)', () => {
                     .spec()
                     .post('/projects')
                     .withHeaders({
-                        Authorization: 'Bearer $S{ownerAccessToken}',
+                        Authorization: `Bearer ${ownerAccessToken}`,
                     })
                     .withBody(dto)
                     .expectStatus(HttpStatus.BAD_REQUEST);
@@ -259,7 +262,7 @@ describe('AppController (e2e)', () => {
                     .spec()
                     .post('/projects')
                     .withHeaders({
-                        Authorization: 'Bearer $S{ownerAccessToken}',
+                        Authorization: `Bearer ${ownerAccessToken}`,
                     })
                     .withBody(dto)
                     .expectStatus(HttpStatus.CREATED);
@@ -267,17 +270,19 @@ describe('AppController (e2e)', () => {
         });
 
         describe('Find project', () => {
+            let projectId: string;
+
             beforeEach(async () => {
                 const dto = CreateProjectDTOStub();
-                await pactum
+                projectId = await pactum
                     .spec()
                     .post('/projects')
                     .withHeaders({
-                        Authorization: 'Bearer $S{ownerAccessToken}',
+                        Authorization: `Bearer ${ownerAccessToken}`,
                     })
                     .withBody(dto)
                     .expectStatus(HttpStatus.CREATED)
-                    .stores('projectId', '_id');
+                    .returns('_id');
             });
 
             it('should find all projects by a user', () => {
@@ -285,19 +290,20 @@ describe('AppController (e2e)', () => {
                     .spec()
                     .get('/projects')
                     .withHeaders({
-                        Authorization: 'Bearer $S{ownerAccessToken}',
+                        Authorization: `Bearer ${ownerAccessToken}`,
                     })
                     .expectStatus(HttpStatus.OK)
                     .expectJsonLength(1);
             });
 
             it('should return 404 when retrieving non-existent project', () => {
+                const badProjectId = 'bad_id';
                 return pactum
                     .spec()
                     .get('/projects/{id}')
-                    .withPathParams('id', 'bad_id')
+                    .withPathParams('id', badProjectId)
                     .withHeaders({
-                        Authorization: 'Bearer $S{ownerAccessToken}',
+                        Authorization: `Bearer ${ownerAccessToken}`,
                     })
                     .expectStatus(HttpStatus.NOT_FOUND);
             });
@@ -306,40 +312,43 @@ describe('AppController (e2e)', () => {
                 return pactum
                     .spec()
                     .get('/projects/{id}')
-                    .withPathParams('id', '$S{projectId}')
+                    .withPathParams('id', `${projectId}`)
                     .withHeaders({
-                        Authorization: 'Bearer $S{ownerAccessToken}',
+                        Authorization: `Bearer ${ownerAccessToken}`,
                     })
                     .expectStatus(HttpStatus.OK)
-                    .expectBodyContains('$S{projectId}');
+                    .expectBodyContains(`${projectId}`);
             });
         });
 
         describe('Update project', () => {
+            let updatedProjectDto: CreateProjectDto;
+            let projectId: string;
+
             beforeEach(async () => {
                 const dto = CreateProjectDTOStub();
-                await pactum
-                    .spec()
-                    .post('/projects')
-                    .withHeaders({
-                        Authorization: 'Bearer $S{ownerAccessToken}',
-                    })
-                    .withBody(dto)
-                    .expectStatus(HttpStatus.CREATED)
-                    .stores('projectId', '_id');
-            });
-
-            it('should be able to update the project details', () => {
-                const updatedProjectDto = {
+                updatedProjectDto = {
                     ...CreateProjectDTOStub(),
                     title: 'Updated title',
                 };
+                projectId = await pactum
+                    .spec()
+                    .post('/projects')
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(dto)
+                    .expectStatus(HttpStatus.CREATED)
+                    .returns('_id');
+            });
+
+            it('should be able to update the project details', () => {
                 return pactum
                     .spec()
                     .patch('/projects/{id}')
-                    .withPathParams('id', '$S{projectId}')
+                    .withPathParams('id', `${projectId}`)
                     .withHeaders({
-                        Authorization: 'Bearer $S{ownerAccessToken}',
+                        Authorization: `Bearer ${ownerAccessToken}`,
                     })
                     .withBody(updatedProjectDto)
                     .expectStatus(HttpStatus.OK)
