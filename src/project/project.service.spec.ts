@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MongoMemoryServer } from 'mongodb-memory-server';
@@ -108,6 +108,7 @@ describe('ProjectService', () => {
 
     describe('Update project', () => {
         let ownerId: string;
+        let nonOwnerId: string;
         let projectId: string;
         const initialProjectDto = CreateProjectDTOStub();
         const updatedProjectDto = {
@@ -117,6 +118,7 @@ describe('ProjectService', () => {
 
         beforeEach(async () => {
             ownerId = new Types.ObjectId(1).toString();
+            nonOwnerId = new Types.ObjectId(2).toString();
             projectId = (await service.create(ownerId, initialProjectDto)).id;
         });
 
@@ -133,6 +135,16 @@ describe('ProjectService', () => {
                 initialProjectDto.description,
             );
             expect(updatedProject.title).toBe(updatedProjectDto.title);
+        });
+
+        it('should throw a ForbiddenException when updating with improper credentials', async () => {
+            await expect(
+                service.update(nonOwnerId, projectId, updatedProjectDto),
+            ).rejects.toThrow(
+                new ForbiddenException(
+                    'Invalid credentials: Cannot update resource',
+                ),
+            );
         });
     });
 });
