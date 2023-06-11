@@ -105,4 +105,34 @@ describe('ProjectService', () => {
             expect(newProject.description).toBe(dto.description);
         });
     });
+
+    describe('Update project', () => {
+        let ownerId: string;
+        let projectId: string;
+        const initialProjectDto = CreateProjectDTOStub();
+        const updatedProjectDto = {
+            ...initialProjectDto,
+            title: 'Updated Title',
+        };
+
+        beforeEach(async () => {
+            ownerId = new Types.ObjectId(1).toString();
+            projectId = (await service.create(ownerId, initialProjectDto)).id;
+        });
+
+        it('should be able to update project details given proper credentials', async () => {
+            const updatedProject = await service.update(
+                ownerId,
+                projectId,
+                updatedProjectDto,
+            );
+
+            expect(updatedProject.ownerId.toString()).toBe(ownerId);
+            expect(updatedProject.id).toBe(projectId);
+            expect(updatedProject.description).toBe(
+                initialProjectDto.description,
+            );
+            expect(updatedProject.title).toBe(updatedProjectDto.title);
+        });
+    });
 });
