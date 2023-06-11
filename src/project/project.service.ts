@@ -50,16 +50,22 @@ export class ProjectService {
         projectId: string,
         updateProjectDto: UpdateProjectDto,
     ) {
-        const { ownerId } = await this.projectModel.findById(projectId);
+        const { ownerId, collaborators } = await this.projectModel.findById(
+            projectId,
+        );
 
+        const isCollaborator = collaborators.some((collab) => {
+            return userId === collab.toString();
+        });
         const isOwner = ownerId.toString() === userId;
-        if (!isOwner) {
+
+        if (!isOwner && !isCollaborator) {
             throw new ForbiddenException(
                 'Invalid credentials: Cannot update resource',
             );
         }
 
-        const projectDetails = { ...updateProjectDto, ownerId: userId };
+        const projectDetails = { ...updateProjectDto, ownerId };
         try {
             const updatedProject = await this.projectModel.findByIdAndUpdate(
                 projectId,
