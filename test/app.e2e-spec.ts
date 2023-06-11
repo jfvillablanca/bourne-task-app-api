@@ -457,5 +457,42 @@ describe('AppController (e2e)', () => {
                     .expectJsonMatch(updatedProjectByCollaborator);
             });
         });
+
+        describe('Delete project', () => {
+            let projectId: string;
+
+            beforeEach(async () => {
+                const dto = CreateProjectDTOStub();
+                projectId = await pactum
+                    .spec()
+                    .post('/projects')
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(dto)
+                    .expectStatus(HttpStatus.CREATED)
+                    .returns('_id');
+            });
+
+            it('should delete project by owner', async () => {
+                await pactum
+                    .spec()
+                    .delete('/projects/{id}')
+                    .withPathParams('id', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.NO_CONTENT)
+
+                return pactum
+                    .spec()
+                    .get('/projects')
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.OK)
+                    .expectJsonLength(0);
+            });
+        })
     });
 });

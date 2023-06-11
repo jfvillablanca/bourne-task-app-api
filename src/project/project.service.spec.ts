@@ -180,4 +180,30 @@ describe('ProjectService', () => {
             );
         });
     });
+
+    describe('Delete project', () => {
+        let ownerId: string;
+        let nonOwnerId: string;
+        let collaboratorId: string;
+        let projectId: string;
+        const initialProjectDto = CreateProjectDTOStub();
+
+        beforeEach(async () => {
+            ownerId = new Types.ObjectId(1).toString();
+            nonOwnerId = new Types.ObjectId(2).toString();
+            collaboratorId = new Types.ObjectId(2).toString();
+            projectId = (await service.create(ownerId, initialProjectDto)).id;
+        });
+
+        it('should be able to delete project if owner credentials', async () => {
+            await service.remove(
+                ownerId,
+                projectId,
+            );
+
+            const projects = await service.findAll(ownerId);
+
+            expect(projects).toStrictEqual([]);
+        });
+    })
 });
