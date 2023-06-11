@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+    ForbiddenException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
@@ -46,6 +50,15 @@ export class ProjectService {
         projectId: string,
         updateProjectDto: UpdateProjectDto,
     ) {
+        const { ownerId } = await this.projectModel.findById(projectId);
+
+        const isOwner = ownerId.toString() === userId;
+        if (!isOwner) {
+            throw new ForbiddenException(
+                'Invalid credentials: Cannot update resource',
+            );
+        }
+
         const projectDetails = { ...updateProjectDto, ownerId: userId };
         try {
             const updatedProject = await this.projectModel.findByIdAndUpdate(
