@@ -1,4 +1,4 @@
-import { CreateProjectDto, UpdateProjectDto } from '../../src/project/dto';
+import { CreateProjectDto } from '../../src/project/dto';
 
 export const CreateProjectDTOStub = (): CreateProjectDto => {
     return {
