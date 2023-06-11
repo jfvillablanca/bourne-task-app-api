@@ -314,5 +314,45 @@ describe('AppController (e2e)', () => {
                     .expectBodyContains('$S{projectId}');
             });
         });
+
+        describe('Update project', () => {
+            beforeEach(async () => {
+                const dto = CreateProjectDTOStub();
+                await pactum
+                    .spec()
+                    .post('/projects')
+                    .withHeaders({
+                        Authorization: 'Bearer $S{ownerAccessToken}',
+                    })
+                    .withBody(dto)
+                    .expectStatus(HttpStatus.CREATED)
+                    .stores('projectId', '_id');
+            });
+
+            it('should be able to update the project details', () => {
+                const updatedProjectDto = {
+                    ...CreateProjectDTOStub(),
+                    title: 'Updated title',
+                };
+                return pactum
+                    .spec()
+                    .patch('/projects/{id}')
+                    .withPathParams('id', '$S{projectId}')
+                    .withHeaders({
+                        Authorization: 'Bearer $S{ownerAccessToken}',
+                    })
+                    .withBody(updatedProjectDto)
+                    .expectStatus(HttpStatus.OK)
+                    .expectJsonMatch(updatedProjectDto);
+            });
+
+            it.todo(
+                'should not allow updating project details if not project owner',
+            );
+
+            it.todo(
+                'should not allow updating project details if not a project collaborator',
+            );
+        });
     });
 });
