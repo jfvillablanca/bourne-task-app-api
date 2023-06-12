@@ -13,6 +13,7 @@
   - [Unit Tests](#unit-tests)
   - [End-to-end Tests](#end-to-end-tests)
 - [Production](#production)
+- [Schema](#schema)
 - [Contribute](#contribute)
 - [License](#license)
 
@@ -104,6 +105,67 @@ $ yarn test:e2e
 # production mode
 $ yarn run start:prod
 ```
+
+<details>
+<summary>Schema</summary>
+
+## Schema <a name="schema"></a> 
+
+- This ER diagram represents the relationships between the object models in the context of a collaborative task application. 
+- The diagram showcases the relationships between entities using standard ER notation, but it's important to note that the actual implementation is based on a document-based model (such as MongoDB) rather than a traditional relational database.
+
+```mermaid
+erDiagram
+    PROJECT ||--o{ TASK: contains
+    PROJECT {
+        ObjectId id PK
+        string title
+        string description
+        ObjectId ownerId FK
+        ObjectId[] collaboratorId FK
+        ObjectId[] taskId FK
+    }
+    USER ||--o{ OWNER: is
+    USER ||--o{ COLLABORATOR: is
+    USER {
+        ObjectId id PK
+        string username
+        string password
+        string email
+        ObjectId[] projectsOwnedId FK
+        ObjectId[] projectsCollaboratedId FK
+    }
+    TASK }|..o{ USER: assigns
+    TASK {
+        ObjectId id PK
+        string title
+        string content
+        ObjectId projectContainerId FK
+        ObjectId[] userAssignedId FK
+    }
+    OWNER }|--|| PROJECT: owns
+    OWNER {
+        ObjectId ownerId PK, FK
+        ObjectId[] projectsOwnedId PK, FK
+    }
+    COLLABORATOR }o--o{ PROJECT: collaborates
+    COLLABORATOR {
+        ObjectId collaboratorId PK, FK
+        ObjectId[] projectsCollaboratedId PK, FK
+    }
+```
+
+- How to read:
+    - Key entities include PROJECT, USER, and TASK, each having their own set of attributes and relationships.
+    - The PROJECT entity has a one-to-many relationship with TASK, indicating that a project can contain zero to many tasks.
+    - The PROJECT entity has exactly one owner and zero to many collaborators.
+    - The USER entity is connected to both OWNER and COLLABORATOR entities, representing the ownership and collaboration relationships with projects. OWNER and COLLABORATOR are relationship entities/tables and do not exist as a separate document in the database. However, they exist in the diagram as demonstration to the relationships between USER and PROJECT.
+    - TASK is associated with USER through a many-to-many relationship, indicating that tasks can be assigned to zero to many project members (owner and collaborators).
+    - The diagram highlights the ownership aspect by showing that an OWNER can own multiple projects.
+    - Additionally, the diagram reflects the collaboration aspect by demonstrating that a COLLABORATOR can collaborate on multiple projects.
+    - The relationships between entities are established through references using ObjectIds, facilitating the linkage between related documents in the document-based model.
+
+</details>
 
 ## Contribute <a name="contribute"></a>
 
