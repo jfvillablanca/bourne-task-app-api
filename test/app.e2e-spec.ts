@@ -25,6 +25,8 @@ describe('AppController (e2e)', () => {
                 whitelist: true,
             }),
         );
+        app.setGlobalPrefix('api');
+
         await app.init();
         await app.listen(port);
 
@@ -50,7 +52,7 @@ describe('AppController (e2e)', () => {
             it('should throw an error if username is empty during registration', () => {
                 return pactum
                     .spec()
-                    .post('/register')
+                    .post('/api/auth/register')
                     .withBody({ ...RegisterDTOStub(), username: '' })
                     .expectStatus(HttpStatus.BAD_REQUEST);
             });
@@ -58,7 +60,7 @@ describe('AppController (e2e)', () => {
             it('should throw an error if email is empty during registration', () => {
                 return pactum
                     .spec()
-                    .post('/register')
+                    .post('/api/auth/register')
                     .withBody({ ...RegisterDTOStub(), email: '' })
                     .expectStatus(HttpStatus.BAD_REQUEST);
             });
@@ -66,7 +68,7 @@ describe('AppController (e2e)', () => {
             it('should throw an error if password is empty during registration', () => {
                 return pactum
                     .spec()
-                    .post('/register')
+                    .post('/api/auth/register')
                     .withBody({ ...RegisterDTOStub(), password: '' })
                     .expectStatus(HttpStatus.BAD_REQUEST);
             });
@@ -76,7 +78,7 @@ describe('AppController (e2e)', () => {
                 delete dto.email;
                 return pactum
                     .spec()
-                    .post('/register')
+                    .post('/api/auth/register')
                     .withBody(dto)
                     .expectStatus(HttpStatus.CREATED);
             });
@@ -90,12 +92,12 @@ describe('AppController (e2e)', () => {
 
                 await pactum
                     .spec()
-                    .post('/register')
+                    .post('/api/auth/register')
                     .withBody(dto)
                     .expectStatus(HttpStatus.CREATED);
                 return pactum
                     .spec()
-                    .post('/register')
+                    .post('/api/auth/register')
                     .withBody(dto)
                     .expectStatus(HttpStatus.CONFLICT);
             });
@@ -115,12 +117,12 @@ describe('AppController (e2e)', () => {
 
                 await pactum
                     .spec()
-                    .post('/register')
+                    .post('/api/auth/register')
                     .withBody(firstDto)
                     .expectStatus(HttpStatus.CREATED);
                 return pactum
                     .spec()
-                    .post('/register')
+                    .post('/api/auth/register')
                     .withBody(secondDto)
                     .expectStatus(HttpStatus.CONFLICT);
             });
@@ -128,7 +130,7 @@ describe('AppController (e2e)', () => {
             it('should be able to register if form fields are valid', () => {
                 return pactum
                     .spec()
-                    .post('/register')
+                    .post('/api/auth/register')
                     .withBody(RegisterDTOStub())
                     .expectStatus(HttpStatus.CREATED);
             });
@@ -138,13 +140,13 @@ describe('AppController (e2e)', () => {
             it('should throw an error if username or email does not exist', async () => {
                 await pactum
                     .spec()
-                    .post('/login')
+                    .post('/api/auth/login')
                     .withBody(LoginDTOStub({ useEmail: true }))
                     .expectStatus(HttpStatus.FORBIDDEN);
 
                 await pactum
                     .spec()
-                    .post('/login')
+                    .post('/api/auth/login')
                     .withBody(LoginDTOStub({ useEmail: false }))
                     .expectStatus(HttpStatus.FORBIDDEN);
             });
@@ -161,13 +163,13 @@ describe('AppController (e2e)', () => {
 
                 await pactum
                     .spec()
-                    .post('/register')
+                    .post('/api/auth/register')
                     .withBody(registerDto)
                     .expectStatus(HttpStatus.CREATED);
 
                 return pactum
                     .spec()
-                    .post('/login')
+                    .post('/api/auth/login')
                     .withBody(loginDto)
                     .expectStatus(HttpStatus.FORBIDDEN);
             });
@@ -175,13 +177,13 @@ describe('AppController (e2e)', () => {
             it('should be able to login if valid credentials are provided', async () => {
                 await pactum
                     .spec()
-                    .post('/register')
+                    .post('/api/auth/register')
                     .withBody(RegisterDTOStub())
                     .expectStatus(HttpStatus.CREATED);
 
                 return pactum
                     .spec()
-                    .post('/login')
+                    .post('/api/auth/login')
                     .withBody(LoginDTOStub())
                     .expectStatus(HttpStatus.OK);
             });
@@ -193,13 +195,13 @@ describe('AppController (e2e)', () => {
         beforeAll(async () => {
             await pactum
                 .spec()
-                .post('/register')
+                .post('/api/auth/register')
                 .withBody(RegisterDTOStub())
                 .expectStatus(HttpStatus.CREATED);
 
             ownerAccessToken = await pactum
                 .spec()
-                .post('/login')
+                .post('/api/auth/login')
                 .withBody(LoginDTOStub())
                 .expectStatus(HttpStatus.OK)
                 .returns('access_token');
@@ -209,7 +211,7 @@ describe('AppController (e2e)', () => {
             it('should get current user', () => {
                 return pactum
                     .spec()
-                    .get('/users/me')
+                    .get('/api/users/me')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
                     })
@@ -219,7 +221,7 @@ describe('AppController (e2e)', () => {
             it('should not be able to access protected route /users/me for requests with missing authentication', () => {
                 return pactum
                     .spec()
-                    .get('/users/me')
+                    .get('/api/users/me')
                     .expectStatus(HttpStatus.UNAUTHORIZED);
             });
         });
@@ -240,13 +242,13 @@ describe('AppController (e2e)', () => {
         beforeEach(async () => {
             await pactum
                 .spec()
-                .post('/register')
+                .post('/api/auth/register')
                 .withBody(RegisterDTOStub())
                 .expectStatus(HttpStatus.CREATED);
 
             ownerAccessToken = await pactum
                 .spec()
-                .post('/login')
+                .post('/api/auth/login')
                 .withBody(owner)
                 .expectStatus(HttpStatus.OK)
                 .returns('access_token');
@@ -257,7 +259,7 @@ describe('AppController (e2e)', () => {
                 const dto = 'bad_body_value';
                 return pactum
                     .spec()
-                    .post('/projects')
+                    .post('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
                     })
@@ -269,7 +271,7 @@ describe('AppController (e2e)', () => {
                 const dto = CreateProjectDTOStub();
                 return pactum
                     .spec()
-                    .post('/projects')
+                    .post('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
                     })
@@ -285,7 +287,7 @@ describe('AppController (e2e)', () => {
                 const dto = CreateProjectDTOStub();
                 projectId = await pactum
                     .spec()
-                    .post('/projects')
+                    .post('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
                     })
@@ -297,7 +299,7 @@ describe('AppController (e2e)', () => {
             it('should find all projects by a user', () => {
                 return pactum
                     .spec()
-                    .get('/projects')
+                    .get('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
                     })
@@ -309,7 +311,7 @@ describe('AppController (e2e)', () => {
                 const badProjectId = 'bad_id';
                 return pactum
                     .spec()
-                    .get('/projects/{id}')
+                    .get('/api/projects/{id}')
                     .withPathParams('id', badProjectId)
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
@@ -320,7 +322,7 @@ describe('AppController (e2e)', () => {
             it('should find a project by project id', () => {
                 return pactum
                     .spec()
-                    .get('/projects/{id}')
+                    .get('/api/projects/{id}')
                     .withPathParams('id', `${projectId}`)
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
@@ -357,7 +359,7 @@ describe('AppController (e2e)', () => {
                 // Owner creates a new project
                 projectId = await pactum
                     .spec()
-                    .post('/projects')
+                    .post('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
                     })
@@ -368,12 +370,12 @@ describe('AppController (e2e)', () => {
                 // Register a non-owner user
                 await pactum
                     .spec()
-                    .post('/register')
+                    .post('/api/auth/register')
                     .withBody({ ...RegisterDTOStub(), ...nonOwnerCredentials })
                     .expectStatus(HttpStatus.CREATED);
                 nonOwnerAccessToken = await pactum
                     .spec()
-                    .post('/login')
+                    .post('/api/auth/login')
                     .withBody({
                         ...LoginDTOStub(),
                         usernameOrEmail: nonOwnerCredentials.username,
@@ -384,7 +386,7 @@ describe('AppController (e2e)', () => {
                 // Register a collaborator user
                 await pactum
                     .spec()
-                    .post('/register')
+                    .post('/api/auth/register')
                     .withBody({
                         ...RegisterDTOStub(),
                         ...collaboratorCredentials,
@@ -392,7 +394,7 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.CREATED);
                 collaboratorAccessToken = await pactum
                     .spec()
-                    .post('/login')
+                    .post('/api/auth/login')
                     .withBody({
                         ...LoginDTOStub(),
                         usernameOrEmail: collaboratorCredentials.username,
@@ -409,7 +411,7 @@ describe('AppController (e2e)', () => {
             it('should be able to update the project details', () => {
                 return pactum
                     .spec()
-                    .patch('/projects/{id}')
+                    .patch('/api/projects/{id}')
                     .withPathParams('id', `${projectId}`)
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
@@ -422,7 +424,7 @@ describe('AppController (e2e)', () => {
             it('should not allow updating project details if not project owner', async () => {
                 return pactum
                     .spec()
-                    .patch('/projects/{id}')
+                    .patch('/api/projects/{id}')
                     .withPathParams('id', `${projectId}`)
                     .withHeaders({
                         Authorization: `Bearer ${nonOwnerAccessToken}`,
@@ -439,7 +441,7 @@ describe('AppController (e2e)', () => {
                 };
                 await pactum
                     .spec()
-                    .patch('/projects/{id}')
+                    .patch('/api/projects/{id}')
                     .withPathParams('id', `${projectId}`)
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
@@ -455,7 +457,7 @@ describe('AppController (e2e)', () => {
 
                 return pactum
                     .spec()
-                    .patch('/projects/{id}')
+                    .patch('/api/projects/{id}')
                     .withPathParams('id', `${projectId}`)
                     .withHeaders({
                         Authorization: `Bearer ${collaboratorAccessToken}`,
@@ -473,7 +475,7 @@ describe('AppController (e2e)', () => {
                 const dto = CreateProjectDTOStub();
                 projectId = await pactum
                     .spec()
-                    .post('/projects')
+                    .post('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
                     })
@@ -485,7 +487,7 @@ describe('AppController (e2e)', () => {
             it('should delete project by owner', async () => {
                 await pactum
                     .spec()
-                    .delete('/projects/{id}')
+                    .delete('/api/projects/{id}')
                     .withPathParams('id', `${projectId}`)
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
@@ -494,7 +496,7 @@ describe('AppController (e2e)', () => {
 
                 return pactum
                     .spec()
-                    .get('/projects')
+                    .get('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
                     })
