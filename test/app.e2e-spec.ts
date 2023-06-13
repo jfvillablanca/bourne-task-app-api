@@ -189,6 +189,7 @@ describe('AppController (e2e)', () => {
     });
 
     describe('User', () => {
+        let ownerAccessToken: string;
         beforeAll(async () => {
             await pactum
                 .spec()
@@ -196,12 +197,12 @@ describe('AppController (e2e)', () => {
                 .withBody(RegisterDTOStub())
                 .expectStatus(HttpStatus.CREATED);
 
-            await pactum
+            ownerAccessToken = await pactum
                 .spec()
                 .post('/login')
                 .withBody(LoginDTOStub())
                 .expectStatus(HttpStatus.OK)
-                .stores('ownerAccessToken', 'access_token');
+                .returns('access_token');
         });
 
         describe('Get me', () => {
@@ -210,7 +211,7 @@ describe('AppController (e2e)', () => {
                     .spec()
                     .get('/users/me')
                     .withHeaders({
-                        Authorization: 'Bearer $S{ownerAccessToken}',
+                        Authorization: `Bearer ${ownerAccessToken}`,
                     })
                     .expectStatus(HttpStatus.OK);
             });
@@ -482,7 +483,7 @@ describe('AppController (e2e)', () => {
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
                     })
-                    .expectStatus(HttpStatus.NO_CONTENT)
+                    .expectStatus(HttpStatus.NO_CONTENT);
 
                 return pactum
                     .spec()
@@ -493,6 +494,6 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.OK)
                     .expectJsonLength(0);
             });
-        })
+        });
     });
 });
