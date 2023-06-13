@@ -215,6 +215,13 @@ describe('AppController (e2e)', () => {
                     })
                     .expectStatus(HttpStatus.OK);
             });
+
+            it('should not be able to access protected route /users/me for requests with missing authentication', () => {
+                return pactum
+                    .spec()
+                    .get('/users/me')
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
+            });
         });
 
         describe('Update user', () => {
