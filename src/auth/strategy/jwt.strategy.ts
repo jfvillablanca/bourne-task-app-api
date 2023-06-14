@@ -27,7 +27,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, jwt) {
         return noPasswordField;
     }
 
-    async validate(payload: { sub: string; username: string }) {
+    async validate(payload: { sub: string; email: string }) {
         const user = await this.userModel.findById(payload.sub);
         return this.dropPassword(user);
     }

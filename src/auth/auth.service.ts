@@ -10,7 +10,7 @@ import * as argon from 'argon2';
 import { Model } from 'mongoose';
 import { User } from '../user/entities';
 import { JWT_SECRET } from './constants';
-import { LoginDto, RegisterDto } from './dto';
+import { AuthDto } from './dto';
 
 @Injectable()
 export class AuthService {
@@ -20,14 +20,7 @@ export class AuthService {
         private configService: ConfigService,
     ) {}
 
-    async register(dto: RegisterDto) {
-        const usernameTaken = await this.userModel.exists({
-            username: dto.username,
-        });
-        if (usernameTaken) {
-            throw new ConflictException('Username is already taken');
-        }
-
+    async register(dto: AuthDto) {
         const emailTaken = await this.userModel.exists({ email: dto.email });
         if (emailTaken && dto.email) {
             throw new ConflictException('Email is already taken');
@@ -39,22 +32,19 @@ export class AuthService {
 
         return this.signToken({
             sub: user._id.toString(),
-            username: user.username,
+            email: user.email,
         });
     }
 
-    async login(dto: LoginDto) {
-        const isValidLoginByUsername = await this.userModel.exists({
-            username: dto.usernameOrEmail,
+    async login(dto: AuthDto) {
+        const isValidLogin = await this.userModel.exists({
+            email: dto.email,
         });
-        const isValidLoginByEmail = await this.userModel.exists({
-            email: dto.usernameOrEmail,
-        });
-        if (!isValidLoginByUsername && !isValidLoginByEmail) {
+        if (!isValidLogin) {
             throw new ForbiddenException('Invalid credentials');
         }
 
-        const { _id } = isValidLoginByUsername ?? isValidLoginByEmail;
+        const { _id } = isValidLogin;
         const user = await this.userModel.findById(_id);
 
         const pwMatches = await argon.verify(user.password, dto.password);
@@ -64,20 +54,20 @@ export class AuthService {
 
         return this.signToken({
             sub: user._id.toString(),
-            username: user.username,
+            email: user.email,
         });
     }
 
     async signToken({
         sub,
-        username,
+        email,
     }: {
         sub: string;
-        username: string;
+        email: string;
     }): Promise<{ access_token: string }> {
         const payload = {
             sub,
-            username,
+            email,
         };
         const token = await this.jwt.signAsync(payload, {
             expiresIn: '15m',

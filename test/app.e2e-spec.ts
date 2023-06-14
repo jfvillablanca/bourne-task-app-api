@@ -5,7 +5,7 @@ import { Connection } from 'mongoose';
 import * as pactum from 'pactum';
 import { UpdateProjectDto } from '../src/project/dto';
 import { AppModule } from './../src/app.module';
-import { CreateProjectDTOStub, LoginDTOStub, RegisterDTOStub } from './stubs';
+import { CreateProjectDTOStub, AuthDTOStub } from './stubs';
 import { getUserIdWithToken } from './utils';
 
 describe('AppController (e2e)', () => {
@@ -49,19 +49,11 @@ describe('AppController (e2e)', () => {
 
     describe('Auth', () => {
         describe('register', () => {
-            it('should throw an error if username is empty during registration', () => {
-                return pactum
-                    .spec()
-                    .post('/api/auth/register')
-                    .withBody({ ...RegisterDTOStub(), username: '' })
-                    .expectStatus(HttpStatus.BAD_REQUEST);
-            });
-
             it('should throw an error if email is empty during registration', () => {
                 return pactum
                     .spec()
                     .post('/api/auth/register')
-                    .withBody({ ...RegisterDTOStub(), email: '' })
+                    .withBody({ ...AuthDTOStub(), email: '' })
                     .expectStatus(HttpStatus.BAD_REQUEST);
             });
 
@@ -69,49 +61,18 @@ describe('AppController (e2e)', () => {
                 return pactum
                     .spec()
                     .post('/api/auth/register')
-                    .withBody({ ...RegisterDTOStub(), password: '' })
+                    .withBody({ ...AuthDTOStub(), password: '' })
                     .expectStatus(HttpStatus.BAD_REQUEST);
-            });
-
-            it('should allow registration without an email', () => {
-                const dto = RegisterDTOStub();
-                delete dto.email;
-                return pactum
-                    .spec()
-                    .post('/api/auth/register')
-                    .withBody(dto)
-                    .expectStatus(HttpStatus.CREATED);
-            });
-
-            it('should throw an error if username is already taken', async () => {
-                const dto = {
-                    ...RegisterDTOStub(),
-                    username: 'unique_username',
-                };
-                delete dto.email;
-
-                await pactum
-                    .spec()
-                    .post('/api/auth/register')
-                    .withBody(dto)
-                    .expectStatus(HttpStatus.CREATED);
-                return pactum
-                    .spec()
-                    .post('/api/auth/register')
-                    .withBody(dto)
-                    .expectStatus(HttpStatus.CONFLICT);
             });
 
             it('should throw an error if email is already taken', async () => {
                 const firstDto = {
-                    ...RegisterDTOStub(),
-                    username: 'first',
+                    ...AuthDTOStub(),
                     email: 'reused@email.com',
                 };
 
                 const secondDto = {
-                    ...RegisterDTOStub(),
-                    username: 'second',
+                    ...AuthDTOStub(),
                     email: 'reused@email.com',
                 };
 
@@ -131,33 +92,33 @@ describe('AppController (e2e)', () => {
                 return pactum
                     .spec()
                     .post('/api/auth/register')
-                    .withBody(RegisterDTOStub())
+                    .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.CREATED);
             });
         });
 
         describe('login', () => {
-            it('should throw an error if username or email does not exist', async () => {
+            it('should throw an error if email does not exist', async () => {
                 await pactum
                     .spec()
                     .post('/api/auth/login')
-                    .withBody(LoginDTOStub({ useEmail: true }))
+                    .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.FORBIDDEN);
 
                 await pactum
                     .spec()
                     .post('/api/auth/login')
-                    .withBody(LoginDTOStub({ useEmail: false }))
+                    .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.FORBIDDEN);
             });
 
             it('should throw an error if password is incorrect', async () => {
                 const registerDto = {
-                    ...RegisterDTOStub(),
+                    ...AuthDTOStub(),
                     password: 'correct-password',
                 };
                 const loginDto = {
-                    ...LoginDTOStub(),
+                    ...AuthDTOStub(),
                     password: 'incorrect-password',
                 };
 
@@ -178,13 +139,13 @@ describe('AppController (e2e)', () => {
                 await pactum
                     .spec()
                     .post('/api/auth/register')
-                    .withBody(RegisterDTOStub())
+                    .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.CREATED);
 
                 return pactum
                     .spec()
                     .post('/api/auth/login')
-                    .withBody(LoginDTOStub())
+                    .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.OK);
             });
         });
@@ -196,13 +157,13 @@ describe('AppController (e2e)', () => {
             await pactum
                 .spec()
                 .post('/api/auth/register')
-                .withBody(RegisterDTOStub())
+                .withBody(AuthDTOStub())
                 .expectStatus(HttpStatus.CREATED);
 
             ownerAccessToken = await pactum
                 .spec()
                 .post('/api/auth/login')
-                .withBody(LoginDTOStub())
+                .withBody(AuthDTOStub())
                 .expectStatus(HttpStatus.OK)
                 .returns('access_token');
         });
@@ -236,14 +197,14 @@ describe('AppController (e2e)', () => {
     });
 
     describe('Projects', () => {
-        const owner = LoginDTOStub();
+        const owner = AuthDTOStub();
         let ownerAccessToken: string;
 
         beforeEach(async () => {
             await pactum
                 .spec()
                 .post('/api/auth/register')
-                .withBody(RegisterDTOStub())
+                .withBody(AuthDTOStub())
                 .expectStatus(HttpStatus.CREATED);
 
             ownerAccessToken = await pactum
@@ -338,14 +299,12 @@ describe('AppController (e2e)', () => {
 
             let nonOwnerAccessToken: string;
             const nonOwnerCredentials = {
-                username: 'hackerman',
                 email: 'hackerman@hack.com',
             };
 
             let collaboratorUserId: string;
             let collaboratorAccessToken: string;
             const collaboratorCredentials = {
-                username: 'collaborator',
                 email: 'collab@orator.com',
             };
 
@@ -371,14 +330,14 @@ describe('AppController (e2e)', () => {
                 await pactum
                     .spec()
                     .post('/api/auth/register')
-                    .withBody({ ...RegisterDTOStub(), ...nonOwnerCredentials })
+                    .withBody({ ...AuthDTOStub(), ...nonOwnerCredentials })
                     .expectStatus(HttpStatus.CREATED);
                 nonOwnerAccessToken = await pactum
                     .spec()
                     .post('/api/auth/login')
                     .withBody({
-                        ...LoginDTOStub(),
-                        usernameOrEmail: nonOwnerCredentials.username,
+                        ...AuthDTOStub(),
+                        email: nonOwnerCredentials.email,
                     })
                     .expectStatus(HttpStatus.OK)
                     .returns('access_token');
@@ -388,7 +347,7 @@ describe('AppController (e2e)', () => {
                     .spec()
                     .post('/api/auth/register')
                     .withBody({
-                        ...RegisterDTOStub(),
+                        ...AuthDTOStub(),
                         ...collaboratorCredentials,
                     })
                     .expectStatus(HttpStatus.CREATED);
@@ -396,8 +355,8 @@ describe('AppController (e2e)', () => {
                     .spec()
                     .post('/api/auth/login')
                     .withBody({
-                        ...LoginDTOStub(),
-                        usernameOrEmail: collaboratorCredentials.username,
+                        ...AuthDTOStub(),
+                        email: collaboratorCredentials.email,
                     })
                     .expectStatus(HttpStatus.OK)
                     .returns('access_token');
