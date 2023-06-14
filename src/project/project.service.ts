@@ -79,13 +79,11 @@ export class ProjectService {
     }
 
     async remove(userId: string, projectId: string) {
-        const { ownerId } = await this.projectModel.findById(
-            projectId,
-        );
+        const { ownerId } = await this.projectModel.findById(projectId);
 
         const isOwner = ownerId.toString() === userId;
 
-        if (!isOwner ) {
+        if (!isOwner) {
             throw new ForbiddenException(
                 'Invalid credentials: Cannot delete resource',
             );
