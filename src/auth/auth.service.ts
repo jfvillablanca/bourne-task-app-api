@@ -9,8 +9,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as argon from 'argon2';
 import { Model } from 'mongoose';
 import { User } from '../user/entities';
-import { JWT_SECRET } from './constants';
+import { JWT_REFRESH_SECRET, JWT_SECRET } from './constants';
 import { AuthDto } from './dto';
+import { JwtPayLoad, Token } from './types';
 
 @Injectable()
 export class AuthService {
@@ -30,10 +31,12 @@ export class AuthService {
         const newUser = new this.userModel({ ...dto, password: hash });
         const user = await newUser.save();
 
-        return this.signToken({
-            sub: user._id.toString(),
-            email: user.email,
+        const [sub, email] = [user._id.toString(), user.email];
+        const tokens = await this.getTokens({
+            sub,
+            email,
         });
+        return tokens;
     }
 
     async loginLocal(dto: AuthDto) {
@@ -41,7 +44,9 @@ export class AuthService {
             email: dto.email,
         });
         if (!isValidLogin) {
-            throw new ForbiddenException('Invalid credentials');
+            throw new ForbiddenException(
+                'Invalid credentials: user does not exist',
+            );
         }
 
         const { _id } = isValidLogin;
@@ -52,31 +57,38 @@ export class AuthService {
             throw new ForbiddenException('Invalid password');
         }
 
-        return this.signToken({
-            sub: user._id.toString(),
-            email: user.email,
+        const [sub, email] = [user._id.toString(), user.email];
+        const tokens = await this.getTokens({
+            sub,
+            email,
         });
+        return tokens;
     }
 
-    async signToken({
-    private async signToken({
+    private async getTokens({
         sub,
         email,
     }: {
         sub: string;
         email: string;
-    }): Promise<{ access_token: string }> {
-        const payload = {
+    }): Promise<Token> {
+        const jwtPayload: JwtPayLoad = {
             sub,
             email,
         };
-        const token = await this.jwt.signAsync(payload, {
-            expiresIn: '15m',
-            secret: this.configService.get(JWT_SECRET),
-        });
-
+        const [access_token, refresh_token] = await Promise.all([
+            this.jwt.signAsync(jwtPayload, {
+                expiresIn: '15m',
+                secret: this.configService.get(JWT_SECRET),
+            }),
+            this.jwt.signAsync(jwtPayload, {
+                expiresIn: '7d',
+                secret: this.configService.get(JWT_REFRESH_SECRET),
+            }),
+        ]);
         return {
-            access_token: token,
+            access_token,
+            refresh_token,
         };
     }
 }
