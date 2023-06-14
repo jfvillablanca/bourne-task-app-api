@@ -59,6 +59,7 @@ export class AuthService {
     }
 
     async signToken({
+    private async signToken({
         sub,
         email,
     }: {
