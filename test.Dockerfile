@@ -1,5 +1,5 @@
 # Using a Debian build
-FROM node:20
+FROM node:20-bullseye
 
 # Installing "git" because "jest --watch" only works inside a git repository.
 RUN apt-get install -y git
