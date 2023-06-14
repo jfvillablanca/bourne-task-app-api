@@ -52,7 +52,7 @@ describe('AppController (e2e)', () => {
             it('should throw an error if email is empty during registration', () => {
                 return pactum
                     .spec()
-                    .post('/api/auth/register')
+                    .post('/api/auth/local/register')
                     .withBody({ ...AuthDTOStub(), email: '' })
                     .expectStatus(HttpStatus.BAD_REQUEST);
             });
@@ -60,7 +60,7 @@ describe('AppController (e2e)', () => {
             it('should throw an error if password is empty during registration', () => {
                 return pactum
                     .spec()
-                    .post('/api/auth/register')
+                    .post('/api/auth/local/register')
                     .withBody({ ...AuthDTOStub(), password: '' })
                     .expectStatus(HttpStatus.BAD_REQUEST);
             });
@@ -78,12 +78,12 @@ describe('AppController (e2e)', () => {
 
                 await pactum
                     .spec()
-                    .post('/api/auth/register')
+                    .post('/api/auth/local/register')
                     .withBody(firstDto)
                     .expectStatus(HttpStatus.CREATED);
                 return pactum
                     .spec()
-                    .post('/api/auth/register')
+                    .post('/api/auth/local/register')
                     .withBody(secondDto)
                     .expectStatus(HttpStatus.CONFLICT);
             });
@@ -91,7 +91,7 @@ describe('AppController (e2e)', () => {
             it('should be able to register if form fields are valid', () => {
                 return pactum
                     .spec()
-                    .post('/api/auth/register')
+                    .post('/api/auth/local/register')
                     .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.CREATED);
             });
@@ -101,13 +101,13 @@ describe('AppController (e2e)', () => {
             it('should throw an error if email does not exist', async () => {
                 await pactum
                     .spec()
-                    .post('/api/auth/login')
+                    .post('/api/auth/local/login')
                     .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.FORBIDDEN);
 
                 await pactum
                     .spec()
-                    .post('/api/auth/login')
+                    .post('/api/auth/local/login')
                     .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.FORBIDDEN);
             });
@@ -124,13 +124,13 @@ describe('AppController (e2e)', () => {
 
                 await pactum
                     .spec()
-                    .post('/api/auth/register')
+                    .post('/api/auth/local/register')
                     .withBody(registerDto)
                     .expectStatus(HttpStatus.CREATED);
 
                 return pactum
                     .spec()
-                    .post('/api/auth/login')
+                    .post('/api/auth/local/login')
                     .withBody(loginDto)
                     .expectStatus(HttpStatus.FORBIDDEN);
             });
@@ -138,13 +138,13 @@ describe('AppController (e2e)', () => {
             it('should be able to login if valid credentials are provided', async () => {
                 await pactum
                     .spec()
-                    .post('/api/auth/register')
+                    .post('/api/auth/local/register')
                     .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.CREATED);
 
                 return pactum
                     .spec()
-                    .post('/api/auth/login')
+                    .post('/api/auth/local/login')
                     .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.OK);
             });
@@ -156,13 +156,13 @@ describe('AppController (e2e)', () => {
         beforeAll(async () => {
             await pactum
                 .spec()
-                .post('/api/auth/register')
+                .post('/api/auth/local/register')
                 .withBody(AuthDTOStub())
                 .expectStatus(HttpStatus.CREATED);
 
             ownerAccessToken = await pactum
                 .spec()
-                .post('/api/auth/login')
+                .post('/api/auth/local/login')
                 .withBody(AuthDTOStub())
                 .expectStatus(HttpStatus.OK)
                 .returns('access_token');
@@ -203,13 +203,13 @@ describe('AppController (e2e)', () => {
         beforeEach(async () => {
             await pactum
                 .spec()
-                .post('/api/auth/register')
+                .post('/api/auth/local/register')
                 .withBody(AuthDTOStub())
                 .expectStatus(HttpStatus.CREATED);
 
             ownerAccessToken = await pactum
                 .spec()
-                .post('/api/auth/login')
+                .post('/api/auth/local/login')
                 .withBody(owner)
                 .expectStatus(HttpStatus.OK)
                 .returns('access_token');
@@ -329,12 +329,12 @@ describe('AppController (e2e)', () => {
                 // Register a non-owner user
                 await pactum
                     .spec()
-                    .post('/api/auth/register')
+                    .post('/api/auth/local/register')
                     .withBody({ ...AuthDTOStub(), ...nonOwnerCredentials })
                     .expectStatus(HttpStatus.CREATED);
                 nonOwnerAccessToken = await pactum
                     .spec()
-                    .post('/api/auth/login')
+                    .post('/api/auth/local/login')
                     .withBody({
                         ...AuthDTOStub(),
                         email: nonOwnerCredentials.email,
@@ -345,7 +345,7 @@ describe('AppController (e2e)', () => {
                 // Register a collaborator user
                 await pactum
                     .spec()
-                    .post('/api/auth/register')
+                    .post('/api/auth/local/register')
                     .withBody({
                         ...AuthDTOStub(),
                         ...collaboratorCredentials,
@@ -353,7 +353,7 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.CREATED);
                 collaboratorAccessToken = await pactum
                     .spec()
-                    .post('/api/auth/login')
+                    .post('/api/auth/local/login')
                     .withBody({
                         ...AuthDTOStub(),
                         email: collaboratorCredentials.email,

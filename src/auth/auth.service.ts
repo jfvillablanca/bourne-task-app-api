@@ -20,7 +20,7 @@ export class AuthService {
         private configService: ConfigService,
     ) {}
 
-    async register(dto: AuthDto) {
+    async registerLocal(dto: AuthDto) {
         const emailTaken = await this.userModel.exists({ email: dto.email });
         if (emailTaken && dto.email) {
             throw new ConflictException('Email is already taken');
@@ -36,7 +36,7 @@ export class AuthService {
         });
     }
 
-    async login(dto: AuthDto) {
+    async loginLocal(dto: AuthDto) {
         const isValidLogin = await this.userModel.exists({
             email: dto.email,
         });

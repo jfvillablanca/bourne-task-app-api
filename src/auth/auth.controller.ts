@@ -6,15 +6,15 @@ import { AuthDto } from './dto';
 export class AuthController {
     constructor(private authService: AuthService) {}
 
-    @Post('register')
+    @Post('local/register')
     @HttpCode(HttpStatus.CREATED)
-    async register(@Body() dto: AuthDto) {
-        return await this.authService.register(dto);
+    async registerLocal(@Body() dto: AuthDto) {
+        return await this.authService.registerLocal(dto);
     }
 
-    @Post('login')
+    @Post('local/login')
     @HttpCode(HttpStatus.OK)
-    async login(@Body() dto: AuthDto) {
-        return await this.authService.login(dto);
+    async loginLocal(@Body() dto: AuthDto) {
+        return await this.authService.loginLocal(dto);
     }
 }
