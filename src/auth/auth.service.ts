@@ -36,6 +36,8 @@ export class AuthService {
             sub,
             email,
         });
+        await this.updateRtHash(sub, tokens.refresh_token);
+
         return tokens;
     }
 
@@ -62,7 +64,17 @@ export class AuthService {
             sub,
             email,
         });
+        await this.updateRtHash(sub, tokens.refresh_token);
+
         return tokens;
+    }
+
+    private async updateRtHash(sub: string, refreshToken: string) {
+        const hashedRefreshToken = await argon.hash(refreshToken);
+        await this.userModel.findByIdAndUpdate(
+            sub,
+            { refresh_token: hashedRefreshToken },
+        );
     }
 
     private async getTokens({
