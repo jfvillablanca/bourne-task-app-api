@@ -142,7 +142,7 @@ describe('AuthService', () => {
     });
 
     describe('Logout', () => {
-        const hashedRefreshToken = 'hashed_refresh_token';
+        const mockedHashedRt = 'hashed_refresh_token';
 
         beforeEach(async () => {
             jest.spyOn(argon, 'hash').mockReset();
@@ -155,7 +155,7 @@ describe('AuthService', () => {
                     if (data === dto.password) {
                         return originalArgonHash(data);
                     } else {
-                        return Promise.resolve(hashedRefreshToken);
+                        return Promise.resolve(mockedHashedRt);
                     }
                 },
             );
@@ -165,7 +165,7 @@ describe('AuthService', () => {
         it('should nullify the refresh token of selected authenticated user', async () => {
             const { _id: userId, refresh_token: rtBeforeLogOut } =
                 await userModel
-                    .findOne({ refresh_token: hashedRefreshToken })
+                    .findOne({ refresh_token: mockedHashedRt })
                     .exec();
 
             await service.logout(userId.toString());
@@ -173,7 +173,7 @@ describe('AuthService', () => {
                 userId,
             );
 
-            expect(rtBeforeLogOut).toBe(hashedRefreshToken);
+            expect(rtBeforeLogOut).toBe(mockedHashedRt);
             expect(rtAfterLogOut).toBeNull();
         });
     });
