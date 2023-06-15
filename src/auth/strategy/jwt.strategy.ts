@@ -6,6 +6,7 @@ import { Document, Model } from 'mongoose';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { User } from '../../user/entities';
 import { jwt, JWT_SECRET } from '../constants';
+import { JwtPayLoad } from '../types';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, jwt) {
@@ -27,7 +28,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, jwt) {
         return noPasswordField;
     }
 
-    async validate(payload: { sub: string; email: string }) {
+    async validate(payload: JwtPayLoad) {
         const user = await this.userModel.findById(payload.sub);
         return this.dropPassword(user);
     }
