@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import * as argon from 'argon2';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { connect, Connection, Model } from 'mongoose';
 import { AuthDTOStub } from '../../test/stubs';
@@ -69,9 +70,36 @@ describe('AuthService', () => {
             expect(tokens.access_token).toBeDefined();
             expect(tokens.refresh_token).toBeDefined();
         });
+
+        it('should automatically authenticate when a new user registers with a refresh_token in database', async () => {
+            const dto = { ...AuthDTOStub(), password: '1234' };
+            const hashedRefreshToken = 'hashed_refresh_token';
+            const originalArgonHash = argon.hash;
+            jest.spyOn(argon, 'hash').mockImplementation(
+                async (data: string) => {
+                    if (data === dto.password) {
+                        return originalArgonHash(data);
+                    } else {
+                        return Promise.resolve(hashedRefreshToken);
+                    }
+                },
+            );
+            await service.registerLocal(dto);
+
+            const registeredUser = await userModel
+                .findOne({ refresh_token: hashedRefreshToken })
+                .exec();
+
+            expect(registeredUser.refresh_token).toBeDefined();
+            expect(registeredUser.refresh_token).toBe(hashedRefreshToken);
+        });
     });
 
     describe('Login Local JWT', () => {
+        beforeEach(() => {
+            jest.spyOn(argon, 'hash').mockReset();
+        });
+
         it('should throw an error if user does not exist', async () => {
             await expect(service.loginLocal(AuthDTOStub())).rejects.toThrow(
                 new ForbiddenException(
@@ -86,5 +114,31 @@ describe('AuthService', () => {
             expect(tokens.access_token).toBeDefined();
             expect(tokens.refresh_token).toBeDefined();
         });
+
+        it('should automatically authenticate when a user logs in with a refresh_token in database', async () => {
+            const dto = { ...AuthDTOStub(), password: '1234' };
+            const hashedRefreshToken = 'hashed_refresh_token';
+            const originalArgonHash = argon.hash;
+            await service.registerLocal(dto);
+            jest.spyOn(argon, 'hash').mockImplementation(
+                async (data: string) => {
+                    if (data === dto.password) {
+                        return originalArgonHash(data);
+                    } else {
+                        return Promise.resolve(hashedRefreshToken);
+                    }
+                },
+            );
+
+            await service.loginLocal(dto);
+
+            const loggedInUser = await userModel
+                .findOne({ refresh_token: hashedRefreshToken })
+                .exec();
+
+            expect(loggedInUser.refresh_token).toBeDefined();
+            expect(loggedInUser.refresh_token).toBe(hashedRefreshToken);
+        });
+    });
     });
 });
