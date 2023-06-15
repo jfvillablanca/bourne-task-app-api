@@ -1,6 +1,15 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    HttpCode,
+    HttpStatus,
+    Post,
+    UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { GetUser } from './decorator';
 import { AuthDto } from './dto';
+import { JwtGuard } from './guard';
 
 @Controller('auth')
 export class AuthController {
@@ -17,4 +26,12 @@ export class AuthController {
     async loginLocal(@Body() dto: AuthDto) {
         return await this.authService.loginLocal(dto);
     }
+
+    @UseGuards(JwtGuard)
+    @Post('logout')
+    @HttpCode(HttpStatus.OK)
+    async logout(@GetUser('id') userId: string) {
+        return await this.authService.logout(userId);
+    }
+
 }

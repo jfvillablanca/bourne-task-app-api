@@ -69,6 +69,13 @@ export class AuthService {
         return tokens;
     }
 
+    async logout(userId: string) {
+        await this.userModel.updateMany(
+            { _id: userId, refresh_token: { $ne: null } },
+            { refresh_token: null },
+        );
+    }
+
     private async updateRtHash(sub: string, refreshToken: string) {
         const hashedRefreshToken = await argon.hash(refreshToken);
         await this.userModel.findByIdAndUpdate(
