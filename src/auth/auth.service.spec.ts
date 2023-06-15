@@ -140,5 +140,41 @@ describe('AuthService', () => {
             expect(loggedInUser.refresh_token).toBe(hashedRefreshToken);
         });
     });
+
+    describe('Logout', () => {
+        const hashedRefreshToken = 'hashed_refresh_token';
+
+        beforeEach(async () => {
+            jest.spyOn(argon, 'hash').mockReset();
+
+            const dto = { ...AuthDTOStub(), password: '1234' };
+            const originalArgonHash = argon.hash;
+            await service.registerLocal(dto);
+            jest.spyOn(argon, 'hash').mockImplementationOnce(
+                async (data: string) => {
+                    if (data === dto.password) {
+                        return originalArgonHash(data);
+                    } else {
+                        return Promise.resolve(hashedRefreshToken);
+                    }
+                },
+            );
+            await service.loginLocal(dto);
+        });
+
+        it('should nullify the refresh token of selected authenticated user', async () => {
+            const { _id: userId, refresh_token: rtBeforeLogOut } =
+                await userModel
+                    .findOne({ refresh_token: hashedRefreshToken })
+                    .exec();
+
+            await service.logout(userId.toString());
+            const { refresh_token: rtAfterLogOut } = await userModel.findById(
+                userId,
+            );
+
+            expect(rtBeforeLogOut).toBe(hashedRefreshToken);
+            expect(rtAfterLogOut).toBeNull();
+        });
     });
 });
