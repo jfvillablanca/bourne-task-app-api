@@ -171,6 +171,43 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.UNAUTHORIZED);
             });
         });
+
+        describe('refresh', () => {
+            const user = AuthDTOStub();
+            let userRefreshToken: string;
+
+            beforeEach(async () => {
+                await spec()
+                    .post('/api/auth/local/register')
+                    .withBody(AuthDTOStub())
+                    .expectStatus(HttpStatus.CREATED);
+
+                userRefreshToken = await spec()
+                    .post('/api/auth/local/login')
+                    .withBody(user)
+                    .expectStatus(HttpStatus.OK)
+                    .returns('refresh_token');
+            });
+
+            it('should return Unauthorized status if refresh is called without proper auth', async () => {
+                await spec()
+                    .post('/api/auth/refresh')
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
+            });
+
+            it('should be able to refresh tokens with from request with valid refresh tokens', async () => {
+                await spec()
+                    .post('/api/auth/refresh')
+                    .withHeaders({
+                        Authorization: `Bearer ${userRefreshToken}`,
+                    })
+                    .expectStatus(HttpStatus.OK);
+            });
+
+            it.todo(
+                'should return Unauthorized status on request using expired auth',
+            );
+        });
     });
 
     describe('User', () => {
