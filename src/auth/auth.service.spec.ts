@@ -1,11 +1,15 @@
-import { ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+    ConflictException,
+    ForbiddenException,
+    UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as argon from 'argon2';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { connect, Connection, Model } from 'mongoose';
+import { connect, Connection, Model, Types } from 'mongoose';
 import { AuthDTOStub } from '../../test/stubs';
 import { User, UserSchema } from '../user/entities';
 import { AuthService } from './auth.service';
@@ -175,6 +179,81 @@ describe('AuthService', () => {
 
             expect(rtBeforeLogOut).toBe(mockedHashedRt);
             expect(rtAfterLogOut).toBeNull();
+        });
+    });
+
+    describe('Refresh', () => {
+        const mockedHashedRt = 'hashed_refresh_token';
+        let rtBeforeRefresh: string;
+        let existingUserId: string;
+
+        beforeEach(async () => {
+            jest.spyOn(argon, 'hash').mockReset();
+
+            const dto = { ...AuthDTOStub(), password: '1234' };
+            const originalArgonHash = argon.hash;
+            await service.registerLocal(dto);
+            jest.spyOn(argon, 'hash').mockImplementationOnce(
+                async (data: string) => {
+                    if (data === dto.password) {
+                        return originalArgonHash(data);
+                    } else {
+                        return Promise.resolve(mockedHashedRt);
+                    }
+                },
+            );
+            const tokens = await service.loginLocal(dto);
+            rtBeforeRefresh = tokens.refresh_token;
+
+            const existingUser = await userModel
+                .findOne({ refresh_token: mockedHashedRt })
+                .exec();
+            existingUserId = existingUser._id.toString();
+        });
+
+        it('should throw an error if user does not exist', async () => {
+            const nonExistentId = new Types.ObjectId(1).toString();
+
+            await expect(
+                service.refreshTokens(nonExistentId, 'fake-refresh-token'),
+            ).rejects.toThrow(new UnauthorizedException('User does not exist'));
+        });
+
+        it('should throw an error if refresh is requested by a logged out user', async () => {
+            await service.logout(existingUserId);
+
+            await expect(
+                service.refreshTokens(existingUserId, rtBeforeRefresh),
+            ).rejects.toThrow(
+                new ForbiddenException('Cannot refresh when logged out'),
+            );
+        });
+
+        it('should throw an error if refresh token mismatches or blacklisted', async () => {
+            jest.spyOn(argon, 'verify').mockResolvedValueOnce(false);
+
+            await expect(
+                service.refreshTokens(existingUserId, rtBeforeRefresh),
+            ).rejects.toThrow(new ForbiddenException('Access Denied'));
+        });
+
+        it('should generate a new refresh token and return it', async () => {
+            const newRefreshToken = 'new_refresh_token';
+            jest.spyOn(argon, 'verify').mockResolvedValueOnce(true);
+            jest.spyOn(service, 'refreshTokens').mockResolvedValueOnce({
+                access_token: 'new_access_token',
+                refresh_token: newRefreshToken,
+            });
+
+            const refreshedTokens = await service.refreshTokens(
+                existingUserId,
+                rtBeforeRefresh,
+            );
+
+            expect(refreshedTokens).toEqual({
+                access_token: 'new_access_token',
+                refresh_token: newRefreshToken,
+            });
         });
     });
 });
