@@ -2,6 +2,7 @@ import {
     ConflictException,
     ForbiddenException,
     Injectable,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -76,12 +77,37 @@ export class AuthService {
         );
     }
 
+    async refreshTokens(userId: string, refreshToken: string) {
+        const user = await this.userModel.findById(userId);
+
+        if (!user) {
+            throw new UnauthorizedException('User does not exist');
+        }
+
+        if (!user.refresh_token) {
+            throw new ForbiddenException('Cannot refresh when logged out');
+        }
+
+        const rtMatches = await argon.verify(user.refresh_token, refreshToken);
+        if (!rtMatches) {
+            throw new ForbiddenException('Access Denied');
+        }
+
+        const [sub, email] = [user._id.toString(), user.email];
+        const tokens = await this.getTokens({
+            sub,
+            email,
+        });
+        await this.updateRtHash(sub, tokens.refresh_token);
+
+        return tokens;
+    }
+
     private async updateRtHash(sub: string, refreshToken: string) {
         const hashedRefreshToken = await argon.hash(refreshToken);
-        await this.userModel.findByIdAndUpdate(
-            sub,
-            { refresh_token: hashedRefreshToken },
-        );
+        await this.userModel.findByIdAndUpdate(sub, {
+            refresh_token: hashedRefreshToken,
+        });
     }
 
     private async getTokens({

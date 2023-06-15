@@ -7,9 +7,10 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { GetUser } from './decorator';
+import { GetRefreshToken, GetUser } from './decorator';
 import { AuthDto } from './dto';
-import { JwtGuard } from './guard';
+import { JwtGuard, JwtGuardRefresh } from './guard';
+import { JwtPayloadWithRt } from './types';
 
 @Controller('auth')
 export class AuthController {
@@ -34,4 +35,11 @@ export class AuthController {
         return await this.authService.logout(userId);
     }
 
+    @UseGuards(JwtGuardRefresh)
+    @Post('refresh')
+    @HttpCode(HttpStatus.OK)
+    async refreshTokens(@GetRefreshToken() body: JwtPayloadWithRt) {
+        const { sub: userId, refresh_token: refreshToken } = body;
+        return await this.authService.refreshTokens(userId, refreshToken);
+    }
 }
