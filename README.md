@@ -129,11 +129,11 @@ erDiagram
     USER ||--o{ COLLABORATOR: is
     USER {
         ObjectId id PK
-        string username
-        string password
         string email
-        ObjectId[] projectsOwnedId FK
-        ObjectId[] projectsCollaboratedId FK
+        string password
+        string refresh_token
+        ObjectId[] projectOwnedId FK
+        ObjectId[] projectCollaboratedId FK
     }
     TASK }|..o{ USER: assigns
     TASK {
@@ -146,12 +146,12 @@ erDiagram
     OWNER }|--|| PROJECT: owns
     OWNER {
         ObjectId ownerId PK, FK
-        ObjectId[] projectsOwnedId PK, FK
+        ObjectId[] projectOwnedId PK, FK
     }
     COLLABORATOR }o--o{ PROJECT: collaborates
     COLLABORATOR {
         ObjectId collaboratorId PK, FK
-        ObjectId[] projectsCollaboratedId PK, FK
+        ObjectId[] projectCollaboratedId PK, FK
     }
 ```
 

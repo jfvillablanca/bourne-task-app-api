@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { CreateProjectDto } from './index';
+import { CreateProjectDto } from '.';
 
 export class UpdateProjectDto extends PartialType(CreateProjectDto) {
     @IsString()
