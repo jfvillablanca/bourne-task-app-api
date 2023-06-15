@@ -2,7 +2,7 @@ import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test } from '@nestjs/testing';
 import { Connection } from 'mongoose';
-import * as pactum from 'pactum';
+import { request, spec } from 'pactum';
 import { UpdateProjectDto } from '../src/project/dto';
 import { AppModule } from './../src/app.module';
 import { AuthDTOStub, CreateProjectDTOStub } from './stubs';
@@ -32,7 +32,7 @@ describe('AppController (e2e)', () => {
 
         mongoConnection = await app.resolve(getConnectionToken());
 
-        pactum.request.setBaseUrl(baseUrl);
+        request.setBaseUrl(baseUrl);
     });
 
     afterAll(() => {
@@ -49,17 +49,15 @@ describe('AppController (e2e)', () => {
 
     describe('Auth', () => {
         describe('register', () => {
-            it('should throw an error if email is empty during registration', () => {
-                return pactum
-                    .spec()
+            it('should throw an error if email is empty during registration', async () => {
+                await spec()
                     .post('/api/auth/local/register')
                     .withBody({ ...AuthDTOStub(), email: '' })
                     .expectStatus(HttpStatus.BAD_REQUEST);
             });
 
-            it('should throw an error if password is empty during registration', () => {
-                return pactum
-                    .spec()
+            it('should throw an error if password is empty during registration', async () => {
+                await spec()
                     .post('/api/auth/local/register')
                     .withBody({ ...AuthDTOStub(), password: '' })
                     .expectStatus(HttpStatus.BAD_REQUEST);
@@ -76,21 +74,18 @@ describe('AppController (e2e)', () => {
                     email: 'reused@email.com',
                 };
 
-                await pactum
-                    .spec()
+                await spec()
                     .post('/api/auth/local/register')
                     .withBody(firstDto)
                     .expectStatus(HttpStatus.CREATED);
-                return pactum
-                    .spec()
+                await spec()
                     .post('/api/auth/local/register')
                     .withBody(secondDto)
                     .expectStatus(HttpStatus.CONFLICT);
             });
 
-            it('should be able to register if form fields are valid', () => {
-                return pactum
-                    .spec()
+            it('should be able to register if form fields are valid', async () => {
+                await spec()
                     .post('/api/auth/local/register')
                     .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.CREATED);
@@ -99,14 +94,12 @@ describe('AppController (e2e)', () => {
 
         describe('login', () => {
             it('should throw an error if email does not exist', async () => {
-                await pactum
-                    .spec()
+                await spec()
                     .post('/api/auth/local/login')
                     .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.FORBIDDEN);
 
-                await pactum
-                    .spec()
+                await spec()
                     .post('/api/auth/local/login')
                     .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.FORBIDDEN);
@@ -122,28 +115,24 @@ describe('AppController (e2e)', () => {
                     password: 'incorrect-password',
                 };
 
-                await pactum
-                    .spec()
+                await spec()
                     .post('/api/auth/local/register')
                     .withBody(registerDto)
                     .expectStatus(HttpStatus.CREATED);
 
-                return pactum
-                    .spec()
+                await spec()
                     .post('/api/auth/local/login')
                     .withBody(loginDto)
                     .expectStatus(HttpStatus.FORBIDDEN);
             });
 
             it('should be able to login if valid credentials are provided', async () => {
-                await pactum
-                    .spec()
+                await spec()
                     .post('/api/auth/local/register')
                     .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.CREATED);
 
-                return pactum
-                    .spec()
+                await spec()
                     .post('/api/auth/local/login')
                     .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.OK);
@@ -155,14 +144,12 @@ describe('AppController (e2e)', () => {
             let userAccessToken: string;
 
             beforeEach(async () => {
-                await pactum
-                    .spec()
+                await spec()
                     .post('/api/auth/local/register')
                     .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.CREATED);
 
-                userAccessToken = await pactum
-                    .spec()
+                userAccessToken = await spec()
                     .post('/api/auth/local/login')
                     .withBody(user)
                     .expectStatus(HttpStatus.OK)
@@ -170,8 +157,7 @@ describe('AppController (e2e)', () => {
             });
 
             it('should be able to logout when logged in', async () => {
-                return pactum
-                    .spec()
+                await spec()
                     .post('/api/auth/logout')
                     .withHeaders({
                         Authorization: `Bearer ${userAccessToken}`,
@@ -179,9 +165,8 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.OK);
             });
 
-            it('should return Unauthorized status if logout is called without proper auth', () => {
-                return pactum
-                    .spec()
+            it('should return Unauthorized status if logout is called without proper auth', async () => {
+                await spec()
                     .post('/api/auth/logout')
                     .expectStatus(HttpStatus.UNAUTHORIZED);
             });
@@ -191,14 +176,12 @@ describe('AppController (e2e)', () => {
     describe('User', () => {
         let ownerAccessToken: string;
         beforeAll(async () => {
-            await pactum
-                .spec()
+            await spec()
                 .post('/api/auth/local/register')
                 .withBody(AuthDTOStub())
                 .expectStatus(HttpStatus.CREATED);
 
-            ownerAccessToken = await pactum
-                .spec()
+            ownerAccessToken = await spec()
                 .post('/api/auth/local/login')
                 .withBody(AuthDTOStub())
                 .expectStatus(HttpStatus.OK)
@@ -206,9 +189,8 @@ describe('AppController (e2e)', () => {
         });
 
         describe('Get me', () => {
-            it('should get current user', () => {
-                return pactum
-                    .spec()
+            it('should get current user', async () => {
+                await spec()
                     .get('/api/users/me')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
@@ -216,9 +198,8 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.OK);
             });
 
-            it('should not be able to access protected route /users/me for requests with missing authentication', () => {
-                return pactum
-                    .spec()
+            it('should not be able to access protected route /users/me for requests with missing authentication', async () => {
+                await spec()
                     .get('/api/users/me')
                     .expectStatus(HttpStatus.UNAUTHORIZED);
             });
@@ -238,14 +219,12 @@ describe('AppController (e2e)', () => {
         let ownerAccessToken: string;
 
         beforeEach(async () => {
-            await pactum
-                .spec()
+            await spec()
                 .post('/api/auth/local/register')
                 .withBody(AuthDTOStub())
                 .expectStatus(HttpStatus.CREATED);
 
-            ownerAccessToken = await pactum
-                .spec()
+            ownerAccessToken = await spec()
                 .post('/api/auth/local/login')
                 .withBody(owner)
                 .expectStatus(HttpStatus.OK)
@@ -253,10 +232,9 @@ describe('AppController (e2e)', () => {
         });
 
         describe('Create project', () => {
-            it('should throw an error on invalid project value', () => {
+            it('should throw an error on invalid project value', async () => {
                 const dto = 'bad_body_value';
-                return pactum
-                    .spec()
+                await spec()
                     .post('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
@@ -265,10 +243,9 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.BAD_REQUEST);
             });
 
-            it('should create a project for the current user', () => {
+            it('should create a project for the current user', async () => {
                 const dto = CreateProjectDTOStub();
-                return pactum
-                    .spec()
+                await spec()
                     .post('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
@@ -283,8 +260,7 @@ describe('AppController (e2e)', () => {
 
             beforeEach(async () => {
                 const dto = CreateProjectDTOStub();
-                projectId = await pactum
-                    .spec()
+                projectId = await spec()
                     .post('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
@@ -294,9 +270,8 @@ describe('AppController (e2e)', () => {
                     .returns('_id');
             });
 
-            it('should find all projects by a user', () => {
-                return pactum
-                    .spec()
+            it('should find all projects by a user', async () => {
+                await spec()
                     .get('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
@@ -305,10 +280,9 @@ describe('AppController (e2e)', () => {
                     .expectJsonLength(1);
             });
 
-            it('should return 404 when retrieving non-existent project', () => {
+            it('should return 404 when retrieving non-existent project', async () => {
                 const badProjectId = 'bad_id';
-                return pactum
-                    .spec()
+                await spec()
                     .get('/api/projects/{id}')
                     .withPathParams('id', badProjectId)
                     .withHeaders({
@@ -317,9 +291,8 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.NOT_FOUND);
             });
 
-            it('should find a project by project id', () => {
-                return pactum
-                    .spec()
+            it('should find a project by project id', async () => {
+                await spec()
                     .get('/api/projects/{id}')
                     .withPathParams('id', `${projectId}`)
                     .withHeaders({
@@ -353,8 +326,7 @@ describe('AppController (e2e)', () => {
                 };
 
                 // Owner creates a new project
-                projectId = await pactum
-                    .spec()
+                projectId = await spec()
                     .post('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
@@ -364,13 +336,11 @@ describe('AppController (e2e)', () => {
                     .returns('_id');
 
                 // Register a non-owner user
-                await pactum
-                    .spec()
+                await spec()
                     .post('/api/auth/local/register')
                     .withBody({ ...AuthDTOStub(), ...nonOwnerCredentials })
                     .expectStatus(HttpStatus.CREATED);
-                nonOwnerAccessToken = await pactum
-                    .spec()
+                nonOwnerAccessToken = await spec()
                     .post('/api/auth/local/login')
                     .withBody({
                         ...AuthDTOStub(),
@@ -380,16 +350,14 @@ describe('AppController (e2e)', () => {
                     .returns('access_token');
 
                 // Register a collaborator user
-                await pactum
-                    .spec()
+                await spec()
                     .post('/api/auth/local/register')
                     .withBody({
                         ...AuthDTOStub(),
                         ...collaboratorCredentials,
                     })
                     .expectStatus(HttpStatus.CREATED);
-                collaboratorAccessToken = await pactum
-                    .spec()
+                collaboratorAccessToken = await spec()
                     .post('/api/auth/local/login')
                     .withBody({
                         ...AuthDTOStub(),
@@ -404,9 +372,8 @@ describe('AppController (e2e)', () => {
                 );
             });
 
-            it('should be able to update the project details', () => {
-                return pactum
-                    .spec()
+            it('should be able to update the project details', async () => {
+                await spec()
                     .patch('/api/projects/{id}')
                     .withPathParams('id', `${projectId}`)
                     .withHeaders({
@@ -418,8 +385,7 @@ describe('AppController (e2e)', () => {
             });
 
             it('should not allow updating project details if not project owner', async () => {
-                return pactum
-                    .spec()
+                await spec()
                     .patch('/api/projects/{id}')
                     .withPathParams('id', `${projectId}`)
                     .withHeaders({
@@ -435,8 +401,7 @@ describe('AppController (e2e)', () => {
                     ...CreateProjectDTOStub(),
                     collaborators: [collaboratorUserId],
                 };
-                await pactum
-                    .spec()
+                await spec()
                     .patch('/api/projects/{id}')
                     .withPathParams('id', `${projectId}`)
                     .withHeaders({
@@ -451,8 +416,7 @@ describe('AppController (e2e)', () => {
                     title: 'Edited by a collaborator',
                 };
 
-                return pactum
-                    .spec()
+                await spec()
                     .patch('/api/projects/{id}')
                     .withPathParams('id', `${projectId}`)
                     .withHeaders({
@@ -469,8 +433,7 @@ describe('AppController (e2e)', () => {
 
             beforeEach(async () => {
                 const dto = CreateProjectDTOStub();
-                projectId = await pactum
-                    .spec()
+                projectId = await spec()
                     .post('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
@@ -481,8 +444,7 @@ describe('AppController (e2e)', () => {
             });
 
             it('should delete project by owner', async () => {
-                await pactum
-                    .spec()
+                await spec()
                     .delete('/api/projects/{id}')
                     .withPathParams('id', `${projectId}`)
                     .withHeaders({
@@ -490,8 +452,7 @@ describe('AppController (e2e)', () => {
                     })
                     .expectStatus(HttpStatus.NO_CONTENT);
 
-                return pactum
-                    .spec()
+                await spec()
                     .get('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
