@@ -5,7 +5,7 @@ import { Connection } from 'mongoose';
 import * as pactum from 'pactum';
 import { UpdateProjectDto } from '../src/project/dto';
 import { AppModule } from './../src/app.module';
-import { CreateProjectDTOStub, AuthDTOStub } from './stubs';
+import { AuthDTOStub, CreateProjectDTOStub } from './stubs';
 import { getUserIdWithToken } from './utils';
 
 describe('AppController (e2e)', () => {
@@ -147,6 +147,43 @@ describe('AppController (e2e)', () => {
                     .post('/api/auth/local/login')
                     .withBody(AuthDTOStub())
                     .expectStatus(HttpStatus.OK);
+            });
+        });
+
+        describe('logout', () => {
+            const user = AuthDTOStub();
+            let userAccessToken: string;
+
+            beforeEach(async () => {
+                await pactum
+                    .spec()
+                    .post('/api/auth/local/register')
+                    .withBody(AuthDTOStub())
+                    .expectStatus(HttpStatus.CREATED);
+
+                userAccessToken = await pactum
+                    .spec()
+                    .post('/api/auth/local/login')
+                    .withBody(user)
+                    .expectStatus(HttpStatus.OK)
+                    .returns('access_token');
+            });
+
+            it('should be able to logout when logged in', async () => {
+                return pactum
+                    .spec()
+                    .post('/api/auth/logout')
+                    .withHeaders({
+                        Authorization: `Bearer ${userAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.OK);
+            });
+
+            it('should return Unauthorized status if logout is called without proper auth', () => {
+                return pactum
+                    .spec()
+                    .post('/api/auth/logout')
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
             });
         });
     });
