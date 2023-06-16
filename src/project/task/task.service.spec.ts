@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MongoMemoryServer } from 'mongodb-memory-server';
@@ -60,6 +61,23 @@ describe('TaskService', () => {
             projectId = (await projectService.create(ownerId, dto)).id;
         });
 
+        it('[findAll] should throw an error if projectId is invalid or not found', async () => {
+            const bogusProjectId = new Types.ObjectId().toHexString();
+
+            await expect(taskService.findAll(bogusProjectId)).rejects.toThrow(
+                new NotFoundException('Project not found'),
+            );
+        });
+
+        it('[findOne] should throw an error if projectId is invalid or not found', async () => {
+            const bogusProjectId = new Types.ObjectId().toHexString();
+            const bogusTaskId = new Types.ObjectId().toHexString();
+
+            await expect(
+                taskService.findOne(bogusProjectId, bogusTaskId),
+            ).rejects.toThrow(new NotFoundException('Project not found'));
+        });
+
         it('should return an empty tasks array for new project', async () => {
             const foundTasks = await taskService.findAll(projectId);
             expect(foundTasks).toStrictEqual([]);
@@ -75,6 +93,14 @@ describe('TaskService', () => {
             expect(foundTasks[0]._id).toStrictEqual(newTask._id);
         });
 
+        it('should throw an error if taskId is invalid or not found', async () => {
+            const bogusTaskId = new Types.ObjectId().toHexString();
+
+            await expect(
+                taskService.findOne(projectId, bogusTaskId),
+            ).rejects.toThrow(new NotFoundException('Task not found'));
+        });
+
         it('should find a specific task by task id and project id', async () => {
             const dto = CreateTaskDTOStub();
             const taskToFind = await taskService.create(projectId, dto);
@@ -86,6 +112,8 @@ describe('TaskService', () => {
 
             expect(foundTask._id).toBe(taskToFind._id);
         });
+    });
+
     describe('Create task', () => {
         let projectId: string;
 
@@ -94,6 +122,22 @@ describe('TaskService', () => {
             const dto = CreateProjectDTOStub();
 
             projectId = (await projectService.create(ownerId, dto)).id;
+        });
+
+        it('[create] should throw an error if projectId is invalid or not found', async () => {
+            const bogusProjectId = new Types.ObjectId().toHexString();
+
+            await expect(
+                taskService.create(bogusProjectId, CreateTaskDTOStub()),
+            ).rejects.toThrow(new NotFoundException('Project not found'));
+        });
+
+        it('should throw an error on for malformed dto/invalid data', async () => {
+            const invalidDto = { ...CreateTaskDTOStub(), title: '' };
+
+            await expect(
+                taskService.create(projectId, invalidDto),
+            ).rejects.toThrow(/validation failed/);
         });
 
         it('should return task details on successful creation', async () => {
