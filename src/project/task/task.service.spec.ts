@@ -65,6 +65,16 @@ describe('TaskService', () => {
             expect(foundTasks).toStrictEqual([]);
         });
 
+        it('should return a task array with one Task element', async () => {
+            const dto = CreateTaskDTOStub();
+            const newTask = await taskService.create(projectId, dto);
+
+            const foundTasks = await taskService.findAll(projectId);
+
+            expect(foundTasks).toHaveLength(1);
+            expect(foundTasks[0]._id).toStrictEqual(newTask._id);
+        });
+
         it('should find a specific task by task id and project id', async () => {
             const dto = CreateTaskDTOStub();
             const taskToFind = await taskService.create(projectId, dto);

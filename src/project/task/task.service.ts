@@ -23,7 +23,10 @@ export class TaskService {
     }
 
     async findAll(projectId: string) {
-        return [];
+        const project = await this.projectModel.findById(projectId);
+        const tasks =  project.tasks;
+
+        return tasks;
     }
 
     async findOne(projectId: string, taskId: string) {
