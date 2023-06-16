@@ -14,7 +14,7 @@ describe('TaskService', () => {
     let mongoConnection: Connection;
     let projectModel: Model<Project>;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         mongod = await MongoMemoryServer.create();
         const uri = mongod.getUri();
         mongoConnection = (await connect(uri)).connection;
