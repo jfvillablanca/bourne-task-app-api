@@ -1,6 +1,7 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { CreateProjectDto } from '.';
+import { Task } from '../types';
 
 export class UpdateProjectDto extends PartialType(CreateProjectDto) {
     @IsString()
@@ -15,4 +16,8 @@ export class UpdateProjectDto extends PartialType(CreateProjectDto) {
     @IsArray()
     @IsOptional()
     collaborators?: string[];
+
+    @IsArray()
+    @IsOptional()
+    tasks?: Task[];
 }

@@ -11,7 +11,7 @@ export const TaskSchema = {
 };
 
 export type Task = {
-    _id: string;
+    _id?: string;
     title: string;
     description?: string;
     assignedProjMemberId?: string[];

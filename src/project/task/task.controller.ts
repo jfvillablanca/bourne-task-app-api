@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Param,
+    Post,
+} from '@nestjs/common';
 import { CreateTaskDto, UpdateTaskDto } from '../dto';
 import { TaskService } from './task.service';
 
@@ -7,6 +16,7 @@ export class TaskController {
     constructor(private readonly taskService: TaskService) {}
 
     @Post()
+    @HttpCode(HttpStatus.CREATED)
     create(
         @Param('projectId') projectId: string,
         @Body() createTaskDto: CreateTaskDto,
@@ -15,11 +25,13 @@ export class TaskController {
     }
 
     @Get()
+    @HttpCode(HttpStatus.OK)
     findAll(@Param('projectId') projectId: string) {
         return this.taskService.findAll(projectId);
     }
 
     @Get(':taskId')
+    @HttpCode(HttpStatus.OK)
     findOne(
         @Param('projectId') projectId: string,
         @Param('taskId') taskId: string,
