@@ -1,11 +1,13 @@
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test } from '@nestjs/testing';
-import { Connection } from 'mongoose';
+import { Connection, Types } from 'mongoose';
 import { request, spec } from 'pactum';
 import { UpdateProjectDto } from '../src/project/dto';
+import { Task } from '../src/project/types';
 import { AppModule } from './../src/app.module';
 import { AuthDTOStub, CreateProjectDTOStub } from './stubs';
+import { CreateTaskDTOStub } from './stubs/task.dto.stub';
 import { getUserIdWithToken } from './utils';
 
 describe('AppController (e2e)', () => {
@@ -496,6 +498,123 @@ describe('AppController (e2e)', () => {
                     })
                     .expectStatus(HttpStatus.OK)
                     .expectJsonLength(0);
+            });
+        });
+    });
+
+    describe('Tasks', () => {
+        let ownerAccessToken: string;
+        let projectId: string;
+
+        beforeEach(async () => {
+            // Register a user
+            await spec()
+                .post('/api/auth/local/register')
+                .withBody(AuthDTOStub())
+                .expectStatus(HttpStatus.CREATED);
+
+            // Log a user in
+            ownerAccessToken = await spec()
+                .post('/api/auth/local/login')
+                .withBody(AuthDTOStub())
+                .expectStatus(HttpStatus.OK)
+                .returns('access_token');
+
+            // User creates a new project
+            projectId = await spec()
+                .post('/api/projects')
+                .withHeaders({
+                    Authorization: `Bearer ${ownerAccessToken}`,
+                })
+                .withBody(CreateProjectDTOStub())
+                .expectStatus(HttpStatus.CREATED)
+                .returns('_id');
+        });
+
+        describe('Create task', () => {
+            it('should throw an error on invalid task value', async () => {
+                const invalidTask = { ...CreateTaskDTOStub(), title: '' };
+
+                await spec()
+                    .post('/api/projects/{projectId}/tasks')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(invalidTask)
+                    .expectStatus(HttpStatus.BAD_REQUEST);
+            });
+
+            it('should create a task successfully', async () => {
+                const newTask = CreateTaskDTOStub();
+
+                await spec()
+                    .post('/api/projects/{projectId}/tasks')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(newTask)
+                    .expectStatus(HttpStatus.CREATED)
+                    .expectJsonMatch(newTask);
+            });
+        });
+
+        describe('Find task', () => {
+            it('should find all tasks from a project', async () => {
+                const newTask = CreateTaskDTOStub();
+                await spec()
+                    .post('/api/projects/{projectId}/tasks')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(newTask)
+                    .expectStatus(HttpStatus.CREATED);
+
+                await spec()
+                    .get('/api/projects/{projectId}/tasks')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.OK)
+                    .expectJsonLength(1)
+                    .expectJsonMatch([newTask]);
+            });
+
+            it('should find a specific task from a project', async () => {
+                const newTask: Task = await spec()
+                    .post('/api/projects/{projectId}/tasks')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(CreateTaskDTOStub())
+                    .expectStatus(HttpStatus.CREATED)
+                    .returns('res.body');
+
+                await spec()
+                    .get('/api/projects/{projectId}/tasks/{taskId}')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withPathParams('taskId', `${newTask._id}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.OK)
+                    .expectJsonMatch(newTask);
+            });
+
+            it('should return 404 on non-existent task', async () => {
+                const nonExistentTaskId = new Types.ObjectId().toHexString();
+                await spec()
+                    .get('/api/projects/{projectId}/tasks/{taskId}')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withPathParams('taskId', `${nonExistentTaskId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.NOT_FOUND);
             });
         });
     });
