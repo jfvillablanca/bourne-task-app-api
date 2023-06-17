@@ -53,9 +53,9 @@ describe('TaskService', () => {
 
     describe('Find task', () => {
         let projectId: string;
+        const ownerId = new Types.ObjectId().toHexString();
 
         beforeEach(async () => {
-            const ownerId = new Types.ObjectId().toHexString();
             const dto = CreateProjectDTOStub();
 
             projectId = (await projectService.create(ownerId, dto)).id;
@@ -64,9 +64,9 @@ describe('TaskService', () => {
         it('should throw an error if projectId is invalid or not found', async () => {
             const bogusProjectId = new Types.ObjectId().toHexString();
 
-            await expect(taskService.findAll(bogusProjectId)).rejects.toThrow(
-                /Project not found/,
-            );
+            await expect(
+                taskService.findAll(ownerId, bogusProjectId),
+            ).rejects.toThrow(/Project not found/);
         });
 
         it('should throw an error if projectId is invalid or not found', async () => {
@@ -74,20 +74,20 @@ describe('TaskService', () => {
             const bogusTaskId = new Types.ObjectId().toHexString();
 
             await expect(
-                taskService.findOne(bogusProjectId, bogusTaskId),
+                taskService.findOne(ownerId, bogusProjectId, bogusTaskId),
             ).rejects.toThrow(/Project not found/);
         });
 
         it('should return an empty tasks array for new project', async () => {
-            const foundTasks = await taskService.findAll(projectId);
+            const foundTasks = await taskService.findAll(ownerId, projectId);
             expect(foundTasks).toStrictEqual([]);
         });
 
         it('should return a task array with one Task element', async () => {
             const dto = CreateTaskDTOStub();
-            const newTask = await taskService.create(projectId, dto);
+            const newTask = await taskService.create(ownerId, projectId, dto);
 
-            const foundTasks = await taskService.findAll(projectId);
+            const foundTasks = await taskService.findAll(ownerId, projectId);
 
             expect(foundTasks).toHaveLength(1);
             expect(foundTasks[0]._id).toStrictEqual(newTask._id);
@@ -97,15 +97,20 @@ describe('TaskService', () => {
             const bogusTaskId = new Types.ObjectId().toHexString();
 
             await expect(
-                taskService.findOne(projectId, bogusTaskId),
+                taskService.findOne(ownerId, projectId, bogusTaskId),
             ).rejects.toThrow(/Task not found/);
         });
 
         it('should find a specific task by task id and project id', async () => {
             const dto = CreateTaskDTOStub();
-            const taskToFind = await taskService.create(projectId, dto);
+            const taskToFind = await taskService.create(
+                ownerId,
+                projectId,
+                dto,
+            );
 
             const foundTask = await taskService.findOne(
+                ownerId,
                 projectId,
                 taskToFind._id,
             );
@@ -116,9 +121,9 @@ describe('TaskService', () => {
 
     describe('Create task', () => {
         let projectId: string;
+        const ownerId = new Types.ObjectId().toHexString();
 
         beforeEach(async () => {
-            const ownerId = new Types.ObjectId().toHexString();
             const dto = CreateProjectDTOStub();
 
             projectId = (await projectService.create(ownerId, dto)).id;
@@ -128,7 +133,11 @@ describe('TaskService', () => {
             const bogusProjectId = new Types.ObjectId().toHexString();
 
             await expect(
-                taskService.create(bogusProjectId, CreateTaskDTOStub()),
+                taskService.create(
+                    ownerId,
+                    bogusProjectId,
+                    CreateTaskDTOStub(),
+                ),
             ).rejects.toThrow(/Project not found/);
         });
 
@@ -136,14 +145,18 @@ describe('TaskService', () => {
             const invalidDto = { ...CreateTaskDTOStub(), title: '' };
 
             await expect(
-                taskService.create(projectId, invalidDto),
+                taskService.create(ownerId, projectId, invalidDto),
             ).rejects.toThrow(/ValidationError/);
         });
 
         it('should return task details on successful creation', async () => {
             const dto = CreateTaskDTOStub();
 
-            const createdTask = await taskService.create(projectId, dto);
+            const createdTask = await taskService.create(
+                ownerId,
+                projectId,
+                dto,
+            );
 
             expect(createdTask.title).toBe(dto.title);
             expect(createdTask.description).toBe(dto.description);
@@ -156,15 +169,19 @@ describe('TaskService', () => {
     describe('Update task', () => {
         let projectId: string;
         let taskId: string;
+        const ownerId = new Types.ObjectId().toHexString();
 
         beforeEach(async () => {
-            const ownerId = new Types.ObjectId().toHexString();
-
             projectId = (
                 await projectService.create(ownerId, CreateProjectDTOStub())
             ).id;
-            taskId = (await taskService.create(projectId, CreateTaskDTOStub()))
-                ._id;
+            taskId = (
+                await taskService.create(
+                    ownerId,
+                    projectId,
+                    CreateTaskDTOStub(),
+                )
+            )._id;
         });
 
         it('should throw an error if projectId is invalid or not found', async () => {
@@ -173,6 +190,7 @@ describe('TaskService', () => {
 
             await expect(
                 taskService.update(
+                    ownerId,
                     nonExistentProjectId,
                     nonExistentTaskId,
                     CreateTaskDTOStub(),
@@ -185,6 +203,7 @@ describe('TaskService', () => {
 
             await expect(
                 taskService.update(
+                    ownerId,
                     projectId,
                     nonExistentTaskId,
                     CreateTaskDTOStub(),
@@ -199,11 +218,13 @@ describe('TaskService', () => {
             };
 
             const updatedTask = await taskService.update(
+                ownerId,
                 projectId,
                 taskId,
                 dto,
             );
             const updatedTaskReadFromDb = await taskService.findOne(
+                ownerId,
                 projectId,
                 taskId,
             );
