@@ -12,27 +12,18 @@ export class TaskService {
         private readonly projectModel: Model<Project>,
     ) {}
 
-    private async findProject(projectId: string) {
+    async create(projectId: string, createTaskDto: CreateTaskDto) {
         try {
-            const project = await this.projectModel.findById(projectId);
-            if (!project)
-                return Promise.reject(
-                    new NotFoundException('Project not found'),
-                );
-            return project;
+            const project = await this.findProject(projectId);
+
+            project.tasks.push(createTaskDto as Task);
+            await project.save();
+
+            const newTask = project.tasks.slice(-1)[0];
+            return newTask;
         } catch (err) {
             throw new Error(err);
         }
-    }
-
-    async create(projectId: string, createTaskDto: CreateTaskDto) {
-        const project = await this.findProject(projectId);
-
-        project.tasks.push(createTaskDto as Task);
-        await project.save();
-
-        const newTask = project.tasks.slice(-1)[0];
-        return newTask;
     }
 
     async findAll(projectId: string) {
@@ -44,14 +35,9 @@ export class TaskService {
 
     async findOne(projectId: string, taskId: string) {
         const project = await this.findProject(projectId);
-        try {
-            const task = project.tasks.find((task) => task._id === taskId);
-            if (!task)
-                return Promise.reject(new NotFoundException('Task not found'));
-            return task;
-        } catch (err) {
-            throw new Error(err);
-        }
+        const task = project.tasks.find((task) => task._id === taskId);
+        if (!task) throw new NotFoundException('Task not found');
+        return task;
     }
 
     async update(
@@ -60,20 +46,19 @@ export class TaskService {
         updateTaskDto: UpdateTaskDto,
     ) {
         const project = await this.findProject(projectId);
+        const taskIndex = project.tasks.findIndex(
+            (task) => task._id === taskId,
+        );
+        if (taskIndex < 0) throw new NotFoundException('Task not found');
 
-        try {
-            const taskIndex = project.tasks.findIndex(
-                (task) => task._id === taskId,
-            );
-            if (taskIndex < 0)
-                return Promise.reject(new NotFoundException('Task not found'));
+        const oldTask = project.toObject().tasks[taskIndex];
+        const updatedTask = this.updateSubdocument(oldTask, updateTaskDto);
+        project.tasks[taskIndex] = updatedTask;
 
-            const oldTask = project.toObject().tasks[taskIndex];
-            const updatedTask = this.updateSubdocument(oldTask, updateTaskDto);
-            project.tasks[taskIndex] = updatedTask;
+        await project.save();
+        return project.tasks[taskIndex];
+    }
 
-            await project.save();
-            return project.tasks[taskIndex];
         } catch (err) {
             throw new Error(err);
         }
@@ -81,6 +66,12 @@ export class TaskService {
 
     remove(id: number) {
         return `This action removes a #${id} task`;
+    private async findProject(projectId: string) {
+        const project = await this.projectModel.findById(projectId);
+        if (!project) {
+            throw new NotFoundException('Project not found');
+        }
+        return project;
     }
 
     private updateSubdocument<T>(oldSubdoc: T, updatedSubdoc: T) {
