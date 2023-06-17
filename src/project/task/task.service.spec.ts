@@ -1,4 +1,3 @@
-import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MongoMemoryServer } from 'mongodb-memory-server';
@@ -66,7 +65,7 @@ describe('TaskService', () => {
             const bogusProjectId = new Types.ObjectId().toHexString();
 
             await expect(taskService.findAll(bogusProjectId)).rejects.toThrow(
-                new NotFoundException('Project not found'),
+                /Project not found/,
             );
         });
 
@@ -76,7 +75,7 @@ describe('TaskService', () => {
 
             await expect(
                 taskService.findOne(bogusProjectId, bogusTaskId),
-            ).rejects.toThrow(new NotFoundException('Project not found'));
+            ).rejects.toThrow(/Project not found/);
         });
 
         it('should return an empty tasks array for new project', async () => {
@@ -99,7 +98,7 @@ describe('TaskService', () => {
 
             await expect(
                 taskService.findOne(projectId, bogusTaskId),
-            ).rejects.toThrow(new NotFoundException('Task not found'));
+            ).rejects.toThrow(/Task not found/);
         });
 
         it('should find a specific task by task id and project id', async () => {
@@ -130,7 +129,7 @@ describe('TaskService', () => {
 
             await expect(
                 taskService.create(bogusProjectId, CreateTaskDTOStub()),
-            ).rejects.toThrow(new NotFoundException('Project not found'));
+            ).rejects.toThrow(/Project not found/);
         });
 
         it('should throw an error on for malformed dto/invalid data', async () => {
@@ -138,7 +137,7 @@ describe('TaskService', () => {
 
             await expect(
                 taskService.create(projectId, invalidDto),
-            ).rejects.toThrow(/validation failed/);
+            ).rejects.toThrow(/ValidationError/);
         });
 
         it('should return task details on successful creation', async () => {
@@ -178,7 +177,7 @@ describe('TaskService', () => {
                     nonExistentTaskId,
                     CreateTaskDTOStub(),
                 ),
-            ).rejects.toThrow(new NotFoundException('Project not found'));
+            ).rejects.toThrow(/Project not found/);
         });
 
         it('should throw an error if taskId is invalid or not found', async () => {
@@ -190,7 +189,7 @@ describe('TaskService', () => {
                     nonExistentTaskId,
                     CreateTaskDTOStub(),
                 ),
-            ).rejects.toThrow(new NotFoundException('Task not found'));
+            ).rejects.toThrow(/Task not found/);
         });
 
         it('should return the updated task if valid and saved to db', async () => {

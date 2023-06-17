@@ -1,8 +1,3 @@
-import {
-    ConflictException,
-    ForbiddenException,
-    UnauthorizedException,
-} from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { getModelToken } from '@nestjs/mongoose';
@@ -65,7 +60,7 @@ describe('AuthService', () => {
             const dto = { ...AuthDTOStub(), email: 'registered@email.com' };
             await service.registerLocal(dto);
             await expect(service.registerLocal(dto)).rejects.toThrow(
-                new ConflictException('Email is already taken'),
+                /Email is already taken/,
             );
         });
 
@@ -106,9 +101,7 @@ describe('AuthService', () => {
 
         it('should throw an error if user does not exist', async () => {
             await expect(service.loginLocal(AuthDTOStub())).rejects.toThrow(
-                new ForbiddenException(
-                    'Invalid credentials: user does not exist',
-                ),
+                /Invalid credentials: user does not exist/,
             );
         });
 
@@ -216,7 +209,7 @@ describe('AuthService', () => {
 
             await expect(
                 service.refreshTokens(nonExistentId, 'fake-refresh-token'),
-            ).rejects.toThrow(new UnauthorizedException('User does not exist'));
+            ).rejects.toThrow(/User does not exist/);
         });
 
         it('should throw an error if refresh is requested by a logged out user', async () => {
@@ -224,9 +217,7 @@ describe('AuthService', () => {
 
             await expect(
                 service.refreshTokens(existingUserId, rtBeforeRefresh),
-            ).rejects.toThrow(
-                new ForbiddenException('Cannot refresh when logged out'),
-            );
+            ).rejects.toThrow(/Cannot refresh when logged out/);
         });
 
         it('should throw an error if refresh token mismatches or blacklisted', async () => {
@@ -234,7 +225,7 @@ describe('AuthService', () => {
 
             await expect(
                 service.refreshTokens(existingUserId, rtBeforeRefresh),
-            ).rejects.toThrow(new ForbiddenException('Access Denied'));
+            ).rejects.toThrow(/Access Denied/);
         });
 
         it('should generate a new refresh token and return it', async () => {

@@ -1,4 +1,3 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MongoMemoryServer } from 'mongodb-memory-server';
@@ -70,7 +69,7 @@ describe('ProjectService', () => {
 
         it('should throw an error when retrieving non-existent project', async () => {
             await expect(service.findOne('bad_id')).rejects.toThrow(
-                new NotFoundException('Project not found'),
+                /Project not found/,
             );
         });
 
@@ -92,7 +91,9 @@ describe('ProjectService', () => {
             const ownerId = new Types.ObjectId().toString();
             const dto = { ...CreateProjectDTOStub(), title: '' };
 
-            await expect(service.create(ownerId, dto)).rejects.toThrow();
+            await expect(service.create(ownerId, dto)).rejects.toThrow(
+                /ValidationError/,
+            );
         });
 
         it('should be able to create a project and save to database', async () => {
@@ -173,11 +174,7 @@ describe('ProjectService', () => {
         it('should throw a ForbiddenException when updating with improper credentials', async () => {
             await expect(
                 service.update(nonOwnerId, projectId, updatedProjectDto),
-            ).rejects.toThrow(
-                new ForbiddenException(
-                    'Invalid credentials: Cannot update resource',
-                ),
-            );
+            ).rejects.toThrow(/Invalid credentials: Cannot update resource/);
         });
     });
 
