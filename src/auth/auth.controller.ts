@@ -7,7 +7,7 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { GetRefreshToken, GetUser } from './decorator';
+import { GetRefreshToken, GetUserId } from './decorator';
 import { AuthDto } from './dto';
 import { JwtGuard, JwtGuardRefresh } from './guard';
 import { JwtPayloadWithRt } from './types';
@@ -31,7 +31,7 @@ export class AuthController {
     @UseGuards(JwtGuard)
     @Post('logout')
     @HttpCode(HttpStatus.OK)
-    async logout(@GetUser('id') userId: string) {
+    async logout(@GetUserId() userId: string) {
         return await this.authService.logout(userId);
     }
 

@@ -10,7 +10,7 @@ import {
     Post,
     UseGuards,
 } from '@nestjs/common';
-import { GetUser } from '../../auth/decorator';
+import { GetUserId } from '../../auth/decorator';
 import { JwtGuard } from '../../auth/guard';
 import { CreateTaskDto, UpdateTaskDto } from '../dto';
 import { TaskService } from './task.service';
@@ -23,7 +23,7 @@ export class TaskController {
     @Post()
     @HttpCode(HttpStatus.CREATED)
     create(
-        @GetUser('id') userId: string,
+        @GetUserId() userId: string,
         @Param('projectId') projectId: string,
         @Body() createTaskDto: CreateTaskDto,
     ) {
@@ -33,7 +33,7 @@ export class TaskController {
     @Get()
     @HttpCode(HttpStatus.OK)
     findAll(
-        @GetUser('id') userId: string,
+        @GetUserId() userId: string,
         @Param('projectId') projectId: string,
     ) {
         return this.taskService.findAll(userId, projectId);
@@ -42,7 +42,7 @@ export class TaskController {
     @Get(':taskId')
     @HttpCode(HttpStatus.OK)
     findOne(
-        @GetUser('id') userId: string,
+        @GetUserId() userId: string,
         @Param('projectId') projectId: string,
         @Param('taskId') taskId: string,
     ) {
@@ -52,7 +52,7 @@ export class TaskController {
     @Patch(':taskId')
     @HttpCode(HttpStatus.OK)
     update(
-        @GetUser('id') userId: string,
+        @GetUserId() userId: string,
         @Param('projectId') projectId: string,
         @Param('taskId') taskId: string,
         @Body() updateTaskDto: UpdateTaskDto,
@@ -68,7 +68,7 @@ export class TaskController {
     @Delete(':taskId')
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(
-        @GetUser('id') userId: string,
+        @GetUserId() userId: string,
         @Param('projectId') projectId: string,
         @Param('taskId') taskId: string,
     ) {

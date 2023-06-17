@@ -10,7 +10,7 @@ import {
     Post,
     UseGuards,
 } from '@nestjs/common';
-import { GetUser } from '../auth/decorator';
+import { GetUserId } from '../auth/decorator';
 import { JwtGuard } from '../auth/guard';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
 import { ProjectService } from './project.service';
@@ -23,7 +23,7 @@ export class ProjectController {
     @Post()
     @HttpCode(HttpStatus.CREATED)
     create(
-        @GetUser('id') userId: string,
+        @GetUserId() userId: string,
         @Body() createProjectDto: CreateProjectDto,
     ) {
         return this.projectService.create(userId, createProjectDto);
@@ -31,7 +31,7 @@ export class ProjectController {
 
     @Get()
     @HttpCode(HttpStatus.OK)
-    findAll(@GetUser('id') userId: string) {
+    findAll(@GetUserId() userId: string) {
         return this.projectService.findAll(userId);
     }
 
@@ -50,7 +50,7 @@ export class ProjectController {
     @Patch(':id')
     @HttpCode(HttpStatus.OK)
     update(
-        @GetUser('id') userId: string,
+        @GetUserId() userId: string,
         @Param('id') projectId: string,
         @Body() updateProjectDto: UpdateProjectDto,
     ) {
@@ -59,7 +59,7 @@ export class ProjectController {
 
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
-    remove(@GetUser('id') userId: string, @Param('id') projectId: string) {
+    remove(@GetUserId() userId: string, @Param('id') projectId: string) {
         return this.projectService.remove(userId, projectId);
     }
 }
