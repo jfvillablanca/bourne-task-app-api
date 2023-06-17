@@ -328,10 +328,10 @@ describe('AppController (e2e)', () => {
             });
 
             it('should return 404 when retrieving non-existent project', async () => {
-                const badProjectId = 'bad_id';
+                const nonExistentProjectId = new Types.ObjectId().toHexString();
                 await spec()
                     .get('/api/projects/{id}')
-                    .withPathParams('id', badProjectId)
+                    .withPathParams('id', nonExistentProjectId)
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
                     })

@@ -68,7 +68,8 @@ describe('ProjectService', () => {
         });
 
         it('should throw an error when retrieving non-existent project', async () => {
-            await expect(service.findOne('bad_id')).rejects.toThrow(
+            const nonExistentProjectId = new Types.ObjectId().toHexString();
+            await expect(service.findOne(nonExistentProjectId)).rejects.toThrow(
                 /Project not found/,
             );
         });

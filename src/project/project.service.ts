@@ -35,14 +35,9 @@ export class ProjectService {
     }
 
     async findOne(projectId: string) {
-        try {
-            const foundProject = await this.projectModel
-                .findById(projectId)
-                .exec();
-            return foundProject;
-        } catch {
-            return Promise.reject(new NotFoundException('Project not found'));
-        }
+        const foundProject = await this.projectModel.findById(projectId).exec();
+        if (!foundProject) throw new NotFoundException('Project not found');
+        return foundProject;
     }
 
     async update(
