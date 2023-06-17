@@ -85,6 +85,28 @@ describe('ProjectService', () => {
 
             expect(foundProject.id).toBe(lookForProjectId);
         });
+
+        it('should find a project and retrieve its project members', async () => {
+            const ownerId = new Types.ObjectId().toHexString();
+            const collaborators = [
+                new Types.ObjectId(1).toHexString(),
+                new Types.ObjectId(2).toHexString(),
+                new Types.ObjectId(3).toHexString(),
+            ];
+            const dto = { ...CreateProjectDTOStub(), ownerId, collaborators };
+            await new projectModel(dto).save();
+            const projects = await service.findAll(ownerId);
+            const lookForProjectId = projects[0].id;
+
+            const projectMembers = await service.getProjectMembers(
+                lookForProjectId,
+            );
+
+            expect(JSON.parse(JSON.stringify(projectMembers))).toStrictEqual([
+                ownerId,
+                ...collaborators,
+            ]);
+        });
     });
 
     describe('Create project', () => {

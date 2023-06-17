@@ -349,9 +349,33 @@ describe('AppController (e2e)', () => {
                     .expectBodyContains(`${projectId}`);
             });
 
-            it.todo(
-                'should be able to retrieve project members: owner + collaborators',
-            );
+            it('should be able to retrieve project members: owner + collaborators', async () => {
+                const collaboratorIds = [
+                    new Types.ObjectId(1).toHexString(),
+                    new Types.ObjectId(2).toHexString(),
+                    new Types.ObjectId(3).toHexString(),
+                ];
+                await spec()
+                    .patch('/api/projects/{id}')
+                    .withPathParams('id', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody({
+                        collaborators: collaboratorIds,
+                    })
+                    .expectStatus(HttpStatus.OK);
+
+                await spec()
+                    .get('/api/projects/{id}/members')
+                    .withPathParams('id', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.OK)
+                    .expectJsonLength(4)
+                    .expectJsonLike(collaboratorIds);
+            });
         });
 
         describe('Update project', () => {
