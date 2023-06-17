@@ -1,7 +1,8 @@
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { connect, Connection, Model } from 'mongoose';
+import { connect, Connection, Model, Types } from 'mongoose';
+import { AuthDTOStub } from '../../test/stubs';
 import { User, UserSchema } from './entities';
 import { UserService } from './user.service';
 
@@ -44,7 +45,18 @@ describe('UserService', () => {
         }
     });
 
+    it('should throw an error on non-existent user', async () => {
+        const nonExistentUserId = new Types.ObjectId().toHexString();
+        await expect(userService.getMe(nonExistentUserId)).rejects.toThrow(
+            /User not found/,
+        );
+    });
+
     it('should get user details', async () => {
-        expect(userService).toBeDefined();
+        const user = await new userModel(AuthDTOStub()).save();
+
+        const getUser = await userService.getMe(user.id);
+        expect(getUser.id).toBe(user.id);
+        expect(getUser.email).toBe(user.email);
     });
 });
