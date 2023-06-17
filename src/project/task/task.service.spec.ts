@@ -55,7 +55,7 @@ describe('TaskService', () => {
         let projectId: string;
 
         beforeEach(async () => {
-            const ownerId = new Types.ObjectId().toString();
+            const ownerId = new Types.ObjectId().toHexString();
             const dto = CreateProjectDTOStub();
 
             projectId = (await projectService.create(ownerId, dto)).id;
@@ -118,7 +118,7 @@ describe('TaskService', () => {
         let projectId: string;
 
         beforeEach(async () => {
-            const ownerId = new Types.ObjectId().toString();
+            const ownerId = new Types.ObjectId().toHexString();
             const dto = CreateProjectDTOStub();
 
             projectId = (await projectService.create(ownerId, dto)).id;
@@ -158,7 +158,7 @@ describe('TaskService', () => {
         let taskId: string;
 
         beforeEach(async () => {
-            const ownerId = new Types.ObjectId().toString();
+            const ownerId = new Types.ObjectId().toHexString();
 
             projectId = (
                 await projectService.create(ownerId, CreateProjectDTOStub())

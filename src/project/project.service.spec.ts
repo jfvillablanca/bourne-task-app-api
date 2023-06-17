@@ -48,7 +48,7 @@ describe('ProjectService', () => {
 
     describe('Find project', () => {
         it('should return an empty array of projects for user with no projects', async () => {
-            const ownerId = new Types.ObjectId().toString();
+            const ownerId = new Types.ObjectId().toHexString();
 
             const projects = await service.findAll(ownerId);
 
@@ -56,7 +56,7 @@ describe('ProjectService', () => {
         });
 
         it('should find a single project in the projects array owned by the user', async () => {
-            const ownerId = new Types.ObjectId().toString();
+            const ownerId = new Types.ObjectId().toHexString();
             const dto = { ...CreateProjectDTOStub(), ownerId };
             await new projectModel(dto).save();
 
@@ -74,7 +74,7 @@ describe('ProjectService', () => {
         });
 
         it('should find a project by project id', async () => {
-            const ownerId = new Types.ObjectId().toString();
+            const ownerId = new Types.ObjectId().toHexString();
             const dto = { ...CreateProjectDTOStub(), ownerId };
             await new projectModel(dto).save();
             const projects = await service.findAll(ownerId);
@@ -88,7 +88,7 @@ describe('ProjectService', () => {
 
     describe('Create project', () => {
         it('should throw an error on bad project body', async () => {
-            const ownerId = new Types.ObjectId().toString();
+            const ownerId = new Types.ObjectId().toHexString();
             const dto = { ...CreateProjectDTOStub(), title: '' };
 
             await expect(service.create(ownerId, dto)).rejects.toThrow(
@@ -97,7 +97,7 @@ describe('ProjectService', () => {
         });
 
         it('should be able to create a project and save to database', async () => {
-            const ownerId = new Types.ObjectId().toString();
+            const ownerId = new Types.ObjectId().toHexString();
             const dto = CreateProjectDTOStub();
 
             const newProject = await service.create(ownerId, dto);
@@ -117,9 +117,9 @@ describe('ProjectService', () => {
         const initialProjectDto = CreateProjectDTOStub();
 
         beforeEach(async () => {
-            ownerId = new Types.ObjectId(1).toString();
-            nonOwnerId = new Types.ObjectId(2).toString();
-            collaboratorId = new Types.ObjectId(2).toString();
+            ownerId = new Types.ObjectId(1).toHexString();
+            nonOwnerId = new Types.ObjectId(2).toHexString();
+            collaboratorId = new Types.ObjectId(2).toHexString();
             projectId = (await service.create(ownerId, initialProjectDto)).id;
             updatedProjectDto = {
                 ...initialProjectDto,
@@ -186,9 +186,9 @@ describe('ProjectService', () => {
         const initialProjectDto = CreateProjectDTOStub();
 
         beforeEach(async () => {
-            ownerId = new Types.ObjectId(1).toString();
-            // nonOwnerId = new Types.ObjectId(2).toString();
-            // collaboratorId = new Types.ObjectId(2).toString();
+            ownerId = new Types.ObjectId(1).toHexString();
+            // nonOwnerId = new Types.ObjectId(2).toHexString();
+            // collaboratorId = new Types.ObjectId(2).toHexString();
             projectId = (await service.create(ownerId, initialProjectDto)).id;
         });
 
