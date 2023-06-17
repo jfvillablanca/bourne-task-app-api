@@ -714,5 +714,73 @@ describe('AppController (e2e)', () => {
                 "should not be able to update a task's assigned project members with non-existent project members",
             );
         });
+
+        describe('Delete task', () => {
+            let taskToBeDeleted: Task;
+
+            beforeEach(async () => {
+                // Create a task to update
+                taskToBeDeleted = await spec()
+                    .post('/api/projects/{projectId}/tasks')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(CreateTaskDTOStub())
+                    .expectStatus(HttpStatus.CREATED)
+                    .returns('res.body');
+            });
+
+            it('should not be able to delete task by any non-project member', async () => {
+                // Register a collaborator user
+                await spec()
+                    .post('/api/auth/local/register')
+                    .withBody({
+                        ...AuthDTOStub(),
+                        email: 'non@owner.com',
+                    })
+                    .expectStatus(HttpStatus.CREATED);
+
+                const nonOwnerAccessToken = await spec()
+                    .post('/api/auth/local/login')
+                    .withBody({
+                        ...AuthDTOStub(),
+                        email: 'non@owner.com',
+                    })
+                    .expectStatus(HttpStatus.OK)
+                    .returns('access_token');
+
+                // Non-owner attempts to delete
+                await spec()
+                    .delete('/api/projects/{projectId}/tasks/{taskId}')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withPathParams('taskId', `${taskToBeDeleted._id}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${nonOwnerAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.FORBIDDEN);
+            });
+
+            it('should be able to delete task by owner', async () => {
+                await spec()
+                    .delete('/api/projects/{projectId}/tasks/{taskId}')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withPathParams('taskId', `${taskToBeDeleted._id}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.NO_CONTENT);
+
+                // Find deleted task
+                await spec()
+                    .get('/api/projects/{projectId}/tasks/{taskId}')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withPathParams('taskId', `${taskToBeDeleted._id}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.NOT_FOUND);
+            });
+        });
     });
 });
