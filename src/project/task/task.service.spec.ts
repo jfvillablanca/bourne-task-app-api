@@ -5,6 +5,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { connect, Connection, Model, Types } from 'mongoose';
 import { CreateProjectDTOStub } from '../../../test/stubs';
 import { CreateTaskDTOStub } from '../../../test/stubs/task.dto.stub';
+import { UpdateTaskDto } from '../dto';
 import { Project, ProjectSchema } from '../entities';
 import { ProjectService } from '../project.service';
 import { TaskService } from './task.service';
@@ -150,6 +151,68 @@ describe('TaskService', () => {
             expect(createdTask.assignedProjMemberId).toStrictEqual(
                 dto.assignedProjMemberId,
             );
+        });
+    });
+
+    describe('Update task', () => {
+        let projectId: string;
+        let taskId: string;
+
+        beforeEach(async () => {
+            const ownerId = new Types.ObjectId().toString();
+
+            projectId = (
+                await projectService.create(ownerId, CreateProjectDTOStub())
+            ).id;
+            taskId = (await taskService.create(projectId, CreateTaskDTOStub()))
+                ._id;
+        });
+
+        it('should throw an error if projectId is invalid or not found', async () => {
+            const nonExistentProjectId = new Types.ObjectId().toHexString();
+            const nonExistentTaskId = new Types.ObjectId().toHexString();
+
+            await expect(
+                taskService.update(
+                    nonExistentProjectId,
+                    nonExistentTaskId,
+                    CreateTaskDTOStub(),
+                ),
+            ).rejects.toThrow(new NotFoundException('Project not found'));
+        });
+
+        it('should throw an error if taskId is invalid or not found', async () => {
+            const nonExistentTaskId = new Types.ObjectId().toHexString();
+
+            await expect(
+                taskService.update(
+                    projectId,
+                    nonExistentTaskId,
+                    CreateTaskDTOStub(),
+                ),
+            ).rejects.toThrow(new NotFoundException('Task not found'));
+        });
+
+        it('should return the updated task if valid and saved to db', async () => {
+            const dto: UpdateTaskDto = {
+                ...CreateTaskDTOStub(),
+                title: 'Updated task',
+            };
+
+            const updatedTask = await taskService.update(
+                projectId,
+                taskId,
+                dto,
+            );
+            const updatedTaskReadFromDb = await taskService.findOne(
+                projectId,
+                taskId,
+            );
+
+            expect(updatedTask._id).toBe(taskId);
+            expect(updatedTask.title).toBe(dto.title);
+            expect(updatedTaskReadFromDb._id).toBe(updatedTask._id);
+            expect(updatedTaskReadFromDb.title).toBe(dto.title);
         });
     });
 });
