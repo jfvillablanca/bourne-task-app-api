@@ -235,4 +235,54 @@ describe('TaskService', () => {
             expect(updatedTaskReadFromDb.title).toBe(dto.title);
         });
     });
+
+    describe('Delete task', () => {
+        let projectId: string;
+        let taskId: string;
+        const ownerId = new Types.ObjectId().toHexString();
+
+        beforeEach(async () => {
+            projectId = (
+                await projectService.create(ownerId, CreateProjectDTOStub())
+            ).id;
+            taskId = (
+                await taskService.create(
+                    ownerId,
+                    projectId,
+                    CreateTaskDTOStub(),
+                )
+            )._id;
+        });
+
+        it('should throw an error if projectId is invalid or not found', async () => {
+            const nonExistentProjectId = new Types.ObjectId().toHexString();
+            const nonExistentTaskId = new Types.ObjectId().toHexString();
+
+            await expect(
+                taskService.remove(
+                    ownerId,
+                    nonExistentProjectId,
+                    nonExistentTaskId,
+                ),
+            ).rejects.toThrow(/Project not found/);
+        });
+
+        it('should throw an error if taskId is invalid or not found', async () => {
+            const nonExistentTaskId = new Types.ObjectId().toHexString();
+
+            await expect(
+                taskService.remove(ownerId, projectId, nonExistentTaskId),
+            ).rejects.toThrow(/Task not found/);
+        });
+
+        it.todo('should throw an error for unauthorized delete request')
+
+        it('should successfully delete a task', async () => {
+            await taskService.remove(ownerId, projectId, taskId);
+
+            await expect(
+                taskService.findOne(ownerId, projectId, taskId),
+            ).rejects.toThrow(/Task not found/);
+        });
+    });
 });
