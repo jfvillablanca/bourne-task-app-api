@@ -54,11 +54,43 @@ export class TaskService {
         }
     }
 
-    update(id: number, updateTaskDto: UpdateTaskDto) {
-        return `This action updates a #${id} task`;
+    async update(
+        projectId: string,
+        taskId: string,
+        updateTaskDto: UpdateTaskDto,
+    ) {
+        const project = await this.findProject(projectId);
+
+        try {
+            const taskIndex = project.tasks.findIndex(
+                (task) => task._id === taskId,
+            );
+            if (taskIndex < 0)
+                return Promise.reject(new NotFoundException('Task not found'));
+
+            const oldTask = project.toObject().tasks[taskIndex];
+            const updatedTask = this.updateSubdocument(oldTask, updateTaskDto);
+            project.tasks[taskIndex] = updatedTask;
+
+            await project.save();
+            return project.tasks[taskIndex];
+        } catch (err) {
+            throw new Error(err);
+        }
     }
 
     remove(id: number) {
         return `This action removes a #${id} task`;
+    }
+
+    private updateSubdocument<T>(oldSubdoc: T, updatedSubdoc: T) {
+        return Object.keys(oldSubdoc).reduce((acc, key) => {
+            if (updatedSubdoc.hasOwnProperty(key)) {
+                acc[key] = updatedSubdoc[key];
+            } else {
+                acc[key] = oldSubdoc[key];
+            }
+            return acc;
+        }, {} as T);
     }
 }

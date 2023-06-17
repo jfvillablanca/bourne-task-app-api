@@ -6,6 +6,7 @@ import {
     HttpCode,
     HttpStatus,
     Param,
+    Patch,
     Post,
 } from '@nestjs/common';
 import { CreateTaskDto, UpdateTaskDto } from '../dto';
@@ -39,9 +40,14 @@ export class TaskController {
         return this.taskService.findOne(projectId, taskId);
     }
 
-    @Patch(':id')
-    update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
-        return this.taskService.update(+id, updateTaskDto);
+    @Patch(':taskId')
+    @HttpCode(HttpStatus.OK)
+    update(
+        @Param('projectId') projectId: string,
+        @Param('taskId') taskId: string,
+        @Body() updateTaskDto: UpdateTaskDto,
+    ) {
+        return this.taskService.update(projectId, taskId, updateTaskDto);
     }
 
     @Delete(':id')
