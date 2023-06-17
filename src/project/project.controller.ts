@@ -41,6 +41,12 @@ export class ProjectController {
         return this.projectService.findOne(projectId);
     }
 
+    @Get(':id/members')
+    @HttpCode(HttpStatus.OK)
+    getProjectMembers(@Param('id') projectId: string) {
+        return this.projectService.getProjectMembers(projectId);
+    }
+
     @Patch(':id')
     @HttpCode(HttpStatus.OK)
     update(

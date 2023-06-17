@@ -40,6 +40,12 @@ export class ProjectService {
         return foundProject;
     }
 
+    async getProjectMembers(projectId: string) {
+        const foundProject = await this.projectModel.findById(projectId).exec();
+        if (!foundProject) throw new NotFoundException('Project not found');
+        return [foundProject.ownerId, ...foundProject.collaborators];
+    }
+
     async update(
         userId: string,
         projectId: string,
