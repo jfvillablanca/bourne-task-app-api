@@ -242,6 +242,14 @@ describe('AppController (e2e)', () => {
                     .get('/api/users/me')
                     .expectStatus(HttpStatus.UNAUTHORIZED);
             });
+
+            it.todo(
+                'should be able to retrieve projects owned by a specific user',
+            );
+
+            it.todo(
+                'should be able to retrieve projects that a user is a member of',
+            );
         });
 
         describe('Update user', () => {
@@ -340,6 +348,10 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.OK)
                     .expectBodyContains(`${projectId}`);
             });
+
+            it.todo(
+                'should be able to retrieve project members: owner + collaborators',
+            );
         });
 
         describe('Update project', () => {
@@ -465,6 +477,10 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.OK)
                     .expectJsonMatch(updatedProjectByCollaborator);
             });
+
+            it.todo(
+                "should not be able to update a project's collaborators with non-existent users",
+            );
         });
 
         describe('Delete project', () => {
