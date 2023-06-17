@@ -3,7 +3,7 @@ import { getConnectionToken } from '@nestjs/mongoose';
 import { Test } from '@nestjs/testing';
 import { Connection, Types } from 'mongoose';
 import { request, spec } from 'pactum';
-import { UpdateProjectDto } from '../src/project/dto';
+import { UpdateProjectDto, UpdateTaskDto } from '../src/project/dto';
 import { Task } from '../src/project/types';
 import { AppModule } from './../src/app.module';
 import { AuthDTOStub, CreateProjectDTOStub } from './stubs';
@@ -616,6 +616,87 @@ describe('AppController (e2e)', () => {
                     })
                     .expectStatus(HttpStatus.NOT_FOUND);
             });
+        });
+
+        describe('Update task', () => {
+            let oldTask: Task;
+            let dto: UpdateTaskDto;
+            const assignedMembers = [
+                new Types.ObjectId(1).toHexString(),
+                new Types.ObjectId(2).toHexString(),
+            ];
+
+            beforeEach(async () => {
+                // Create a task to update
+                oldTask = await spec()
+                    .post('/api/projects/{projectId}/tasks')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(CreateTaskDTOStub())
+                    .expectStatus(HttpStatus.CREATED)
+                    .returns('res.body');
+
+                dto = {
+                    ...CreateTaskDTOStub(),
+                    title: 'Task with assigned members',
+                    assignedProjMemberId: assignedMembers,
+                };
+            });
+
+            it('should throw an error on invalid project id', async () => {
+                const nonExistentProjectId = new Types.ObjectId().toHexString();
+
+                await spec()
+                    .patch('/api/projects/{projectId}/tasks/{taskId}')
+                    .withPathParams('projectId', `${nonExistentProjectId}`)
+                    .withPathParams('taskId', `${oldTask._id}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(dto)
+                    .expectStatus(HttpStatus.NOT_FOUND);
+            });
+
+            it('should throw an error on invalid task id', async () => {
+                const nonExistentTaskId = new Types.ObjectId().toHexString();
+
+                await spec()
+                    .patch('/api/projects/{projectId}/tasks/{taskId}')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withPathParams('taskId', `${nonExistentTaskId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(dto)
+                    .expectStatus(HttpStatus.NOT_FOUND);
+            });
+
+            it('should update a task successfully', async () => {
+                await spec()
+                    .patch('/api/projects/{projectId}/tasks/{taskId}')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withPathParams('taskId', `${oldTask._id}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(dto)
+                    .expectStatus(HttpStatus.OK)
+                    .expect((ctx) => {
+                        const updatedTask: Task = ctx.res.body;
+
+                        expect(updatedTask._id).toBe(oldTask._id);
+                        expect(updatedTask.title).not.toBe(oldTask.title);
+                        expect(updatedTask.assignedProjMemberId).toStrictEqual(
+                            assignedMembers,
+                        );
+                    });
+            });
+
+            it.todo(
+                "should not be able to update a task's assigned project members with non-existent project members",
+            );
         });
     });
 });
