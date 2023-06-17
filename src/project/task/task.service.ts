@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+    ForbiddenException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateTaskDto, UpdateTaskDto } from '../dto';
@@ -12,9 +16,13 @@ export class TaskService {
         private readonly projectModel: Model<Project>,
     ) {}
 
-    async create(projectId: string, createTaskDto: CreateTaskDto) {
+    async create(
+        userId: string,
+        projectId: string,
+        createTaskDto: CreateTaskDto,
+    ) {
         try {
-            const project = await this.findProject(projectId);
+            const project = await this.findProject(userId, projectId);
 
             project.tasks.push(createTaskDto as Task);
             await project.save();
@@ -26,26 +34,27 @@ export class TaskService {
         }
     }
 
-    async findAll(projectId: string) {
-        const project = await this.findProject(projectId);
+    async findAll(userId: string, projectId: string) {
+        const project = await this.findProject(userId, projectId);
         const tasks = project.tasks;
 
         return tasks;
     }
 
-    async findOne(projectId: string, taskId: string) {
-        const project = await this.findProject(projectId);
+    async findOne(userId: string, projectId: string, taskId: string) {
+        const project = await this.findProject(userId, projectId);
         const task = project.tasks.find((task) => task._id === taskId);
         if (!task) throw new NotFoundException('Task not found');
         return task;
     }
 
     async update(
+        userId: string,
         projectId: string,
         taskId: string,
         updateTaskDto: UpdateTaskDto,
     ) {
-        const project = await this.findProject(projectId);
+        const project = await this.findProject(userId, projectId);
         const taskIndex = project.tasks.findIndex(
             (task) => task._id === taskId,
         );
@@ -59,18 +68,28 @@ export class TaskService {
         return project.tasks[taskIndex];
     }
 
-        } catch (err) {
-            throw new Error(err);
-        }
     }
 
     remove(id: number) {
         return `This action removes a #${id} task`;
-    private async findProject(projectId: string) {
+    private async findProject(userId: string, projectId: string) {
         const project = await this.projectModel.findById(projectId);
         if (!project) {
             throw new NotFoundException('Project not found');
         }
+
+        const { ownerId, collaborators } = project;
+        const isCollaborator = collaborators.some((collab) => {
+            return userId === collab.toString();
+        });
+        const isOwner = ownerId.toString() === userId;
+
+        if (!isOwner && !isCollaborator) {
+            throw new ForbiddenException(
+                'Invalid credentials: Cannot update resource',
+            );
+        }
+
         return project;
     }
 
