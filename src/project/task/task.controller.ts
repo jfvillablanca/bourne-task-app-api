@@ -65,8 +65,13 @@ export class TaskController {
         );
     }
 
-    @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.taskService.remove(+id);
+    @Delete(':taskId')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    remove(
+        @GetUser('id') userId: string,
+        @Param('projectId') projectId: string,
+        @Param('taskId') taskId: string,
+    ) {
+        return this.taskService.remove(userId, projectId, taskId);
     }
 }

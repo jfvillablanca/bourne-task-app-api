@@ -68,10 +68,17 @@ export class TaskService {
         return project.tasks[taskIndex];
     }
 
+    async remove(userId: string, projectId: string, taskId: string) {
+        const project = await this.findProject(userId, projectId);
+        const taskIndex = project.tasks.findIndex(
+            (task) => task._id === taskId,
+        );
+        if (taskIndex < 0) throw new NotFoundException('Task not found');
+
+        project.tasks.splice(taskIndex, 1);
+        await project.save();
     }
 
-    remove(id: number) {
-        return `This action removes a #${id} task`;
     private async findProject(userId: string, projectId: string) {
         const project = await this.projectModel.findById(projectId);
         if (!project) {
