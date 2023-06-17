@@ -61,7 +61,7 @@ describe('TaskService', () => {
             projectId = (await projectService.create(ownerId, dto)).id;
         });
 
-        it('[findAll] should throw an error if projectId is invalid or not found', async () => {
+        it('should throw an error if projectId is invalid or not found', async () => {
             const bogusProjectId = new Types.ObjectId().toHexString();
 
             await expect(taskService.findAll(bogusProjectId)).rejects.toThrow(
@@ -69,7 +69,7 @@ describe('TaskService', () => {
             );
         });
 
-        it('[findOne] should throw an error if projectId is invalid or not found', async () => {
+        it('should throw an error if projectId is invalid or not found', async () => {
             const bogusProjectId = new Types.ObjectId().toHexString();
             const bogusTaskId = new Types.ObjectId().toHexString();
 
@@ -124,7 +124,7 @@ describe('TaskService', () => {
             projectId = (await projectService.create(ownerId, dto)).id;
         });
 
-        it('[create] should throw an error if projectId is invalid or not found', async () => {
+        it('should throw an error if projectId is invalid or not found', async () => {
             const bogusProjectId = new Types.ObjectId().toHexString();
 
             await expect(
