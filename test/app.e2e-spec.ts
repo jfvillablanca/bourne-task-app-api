@@ -501,10 +501,6 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.OK)
                     .expectJsonMatch(updatedProjectByCollaborator);
             });
-
-            it.todo(
-                "should not be able to update a project's collaborators with non-existent users",
-            );
         });
 
         describe('Delete project', () => {
@@ -733,10 +729,6 @@ describe('AppController (e2e)', () => {
                         );
                     });
             });
-
-            it.todo(
-                "should not be able to update a task's assigned project members with non-existent project members",
-            );
         });
 
         describe('Delete task', () => {

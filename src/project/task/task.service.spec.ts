@@ -275,8 +275,6 @@ describe('TaskService', () => {
             ).rejects.toThrow(/Task not found/);
         });
 
-        it.todo('should throw an error for unauthorized delete request')
-
         it('should successfully delete a task', async () => {
             await taskService.remove(ownerId, projectId, taskId);
 
