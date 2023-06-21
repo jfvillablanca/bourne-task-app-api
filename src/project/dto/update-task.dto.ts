@@ -9,6 +9,10 @@ export class UpdateTaskDto extends PartialType(CreateTaskDto) {
 
     @IsString()
     @IsOptional()
+    taskState: string;
+
+    @IsString()
+    @IsOptional()
     description?: string;
 
     @IsArray()

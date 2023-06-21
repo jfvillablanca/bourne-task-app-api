@@ -17,9 +17,18 @@ export class Project {
     ownerId: string;
 
     @Prop({
+        required: true,
         type: [{ type: SchemaTypes.ObjectId, ref: User.name }],
+        default: [],
     })
     collaborators: string[];
+
+    @Prop({
+        required: true,
+        type: [String],
+        default: ['todo', 'doing', 'done'],
+    })
+    taskStates: string[];
 
     @Prop({
         required: true,
