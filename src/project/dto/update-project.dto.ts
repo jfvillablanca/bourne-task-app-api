@@ -19,5 +19,9 @@ export class UpdateProjectDto extends PartialType(CreateProjectDto) {
 
     @IsArray()
     @IsOptional()
+    taskStates?: string[];
+
+    @IsArray()
+    @IsOptional()
     tasks?: Task[];
 }
