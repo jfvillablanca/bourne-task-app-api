@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { User } from '../user/entities';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
 import { Project } from './entities';
 
@@ -13,6 +14,8 @@ export class ProjectService {
     constructor(
         @InjectModel(Project.name)
         private readonly projectModel: Model<Project>,
+        @InjectModel(User.name)
+        private readonly userModel: Model<User>,
     ) {}
 
     async create(userId: string, createProjectDto: CreateProjectDto) {
@@ -43,7 +46,16 @@ export class ProjectService {
     async getProjectMembers(projectId: string) {
         const foundProject = await this.projectModel.findById(projectId).exec();
         if (!foundProject) throw new NotFoundException('Project not found');
-        return [foundProject.ownerId, ...foundProject.collaborators];
+
+        const memberIds = [foundProject.ownerId, ...foundProject.collaborators];
+        const members = await Promise.all(
+            memberIds.map(async (userId) => {
+                const user = await this.userModel.findById(userId);
+                return { _id: user._id, email: user.email };
+            }),
+        );
+
+        return members;
     }
 
     async update(

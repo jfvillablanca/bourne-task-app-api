@@ -5,6 +5,7 @@ import { connect, Connection, Model, Types } from 'mongoose';
 import { CreateProjectDTOStub } from '../../../test/stubs';
 import { CreateTaskDTOStub } from '../../../test/stubs/task.dto.stub';
 import { UpdateTaskDto } from '../dto';
+import { User, UserSchema } from '../../user/entities';
 import { Project, ProjectSchema } from '../entities';
 import { ProjectService } from '../project.service';
 import { TaskService } from './task.service';
@@ -15,12 +16,14 @@ describe('TaskService', () => {
     let mongod: MongoMemoryServer;
     let mongoConnection: Connection;
     let projectModel: Model<Project>;
+    let userModel: Model<User>;
 
     beforeAll(async () => {
         mongod = await MongoMemoryServer.create();
         const uri = mongod.getUri();
         mongoConnection = (await connect(uri)).connection;
         projectModel = mongoConnection.model(Project.name, ProjectSchema);
+        userModel = mongoConnection.model(User.name, UserSchema);
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
@@ -29,6 +32,10 @@ describe('TaskService', () => {
                 {
                     provide: getModelToken(Project.name),
                     useValue: projectModel,
+                },
+                {
+                    provide: getModelToken(User.name),
+                    useValue: userModel,
                 },
             ],
         }).compile();
