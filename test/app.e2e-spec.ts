@@ -350,11 +350,23 @@ describe('AppController (e2e)', () => {
             });
 
             it('should be able to retrieve project members: owner + collaborators', async () => {
-                const collaboratorIds = [
-                    new Types.ObjectId(1).toHexString(),
-                    new Types.ObjectId(2).toHexString(),
-                    new Types.ObjectId(3).toHexString(),
+                const collaborators = [
+                    { email: 'Sincere@april.biz', password: 'mock' },
+                    { email: 'Sherwood@rosamond.me', password: 'mock' },
+                    { email: 'Rey.Padberg@karina.biz', password: 'mock' },
                 ];
+                const tokens: {access_token: string, refresh_token: string}[] = await Promise.all(
+                    collaborators.map(async (collaborator) => {
+                        return await spec()
+                            .post('/api/auth/local/register')
+                            .withBody(collaborator)
+                            .returns('res.body')
+                    })
+                )
+                const collaboratorIds = tokens.map(token => {
+                    return getUserIdWithToken(token.access_token)
+                })
+
                 await spec()
                     .patch('/api/projects/{id}')
                     .withPathParams('id', `${projectId}`)
@@ -366,7 +378,7 @@ describe('AppController (e2e)', () => {
                     })
                     .expectStatus(HttpStatus.OK);
 
-                await spec()
+                const response: {_id: string, email: string }[] = await spec()
                     .get('/api/projects/{id}/members')
                     .withPathParams('id', `${projectId}`)
                     .withHeaders({
@@ -374,7 +386,11 @@ describe('AppController (e2e)', () => {
                     })
                     .expectStatus(HttpStatus.OK)
                     .expectJsonLength(4)
-                    .expectJsonLike(collaboratorIds);
+                    .returns('res.body')
+
+                const memberEmails = [owner.email, ...collaborators.map(collaborator => collaborator.email)]
+                const responseEmails = response.map(user => user.email)
+                expect(responseEmails).toStrictEqual(memberEmails)
             });
         });
 

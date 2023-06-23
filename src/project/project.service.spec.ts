@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { connect, Connection, Model, Types } from 'mongoose';
 import { CreateProjectDTOStub } from '../../test/stubs';
+import { User, UserSchema } from '../user/entities';
 import { UpdateProjectDto } from './dto';
 import { Project, ProjectSchema } from './entities';
 import { ProjectService } from './project.service';
@@ -12,12 +13,14 @@ describe('ProjectService', () => {
     let mongod: MongoMemoryServer;
     let mongoConnection: Connection;
     let projectModel: Model<Project>;
+    let userModel: Model<User>;
 
     beforeAll(async () => {
         mongod = await MongoMemoryServer.create();
         const uri = mongod.getUri();
         mongoConnection = (await connect(uri)).connection;
         projectModel = mongoConnection.model(Project.name, ProjectSchema);
+        userModel = mongoConnection.model(User.name, UserSchema);
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
@@ -25,6 +28,10 @@ describe('ProjectService', () => {
                 {
                     provide: getModelToken(Project.name),
                     useValue: projectModel,
+                },
+                {
+                    provide: getModelToken(User.name),
+                    useValue: userModel,
                 },
             ],
         }).compile();
@@ -87,25 +94,36 @@ describe('ProjectService', () => {
         });
 
         it('should find a project and retrieve its project members', async () => {
-            const ownerId = new Types.ObjectId().toHexString();
+            const owner = { email: 'Boberline@sci.co', password: 'mock' };
             const collaborators = [
-                new Types.ObjectId(1).toHexString(),
-                new Types.ObjectId(2).toHexString(),
-                new Types.ObjectId(3).toHexString(),
+                { email: 'Sincere@april.biz', password: 'mock' },
+                { email: 'Sherwood@rosamond.me', password: 'mock' },
+                { email: 'Rey.Padberg@karina.biz', password: 'mock' },
             ];
-            const dto = { ...CreateProjectDTOStub(), ownerId, collaborators };
+
+            const newUsers = await userModel.insertMany([
+                owner,
+                ...collaborators,
+            ]);
+            const collaboratorIds = newUsers.slice(-3).map((user) => user._id);
+            const ownerId = newUsers[0]._id;
+
+            const dto = {
+                ...CreateProjectDTOStub(),
+                ownerId,
+                collaborators: collaboratorIds,
+            };
             await new projectModel(dto).save();
-            const projects = await service.findAll(ownerId);
+            const projects = await service.findAll(ownerId.toHexString());
             const lookForProjectId = projects[0].id;
 
             const projectMembers = await service.getProjectMembers(
                 lookForProjectId,
             );
 
-            expect(JSON.parse(JSON.stringify(projectMembers))).toStrictEqual([
-                ownerId,
-                ...collaborators,
-            ]);
+            expect(projectMembers).toStrictEqual(
+                newUsers.map((user) => ({ _id: user._id, email: user.email })),
+            );
         });
     });
 
