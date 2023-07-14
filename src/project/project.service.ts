@@ -32,7 +32,12 @@ export class ProjectService {
 
     async findAll(userId: string) {
         const projects = await this.projectModel
-            .find({ ownerId: userId })
+            .find({
+                $or: [
+                    { ownerId: userId },
+                    { collaborators: { $in: [userId] } },
+                ],
+            })
             .exec();
         return projects;
     }
