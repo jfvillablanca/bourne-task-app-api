@@ -62,12 +62,31 @@ describe('ProjectService', () => {
             expect(projects).toStrictEqual([]);
         });
 
-        it('should find a single project in the projects array owned by the user', async () => {
+        it('should find all projects as the owner', async () => {
             const ownerId = new Types.ObjectId().toHexString();
             const dto = { ...CreateProjectDTOStub(), ownerId };
             await new projectModel(dto).save();
 
             const projects = await service.findAll(ownerId);
+
+            expect(projects.length).toBe(1);
+            expect(projects[0].title).toBe(dto.title);
+            expect(projects[0].description).toBe(dto.description);
+        });
+
+        it('should allow a collaborator to find all projects of some owner', async () => {
+            const ownerId = new Types.ObjectId(0).toHexString();
+            const collaboratorId = new Types.ObjectId(1).toHexString();
+            const dto = { ...CreateProjectDTOStub(), ownerId };
+            const projectId = (
+                await new projectModel(dto).save()
+            )._id.toHexString();
+            // Let owner add the collaborator to the collaborators list
+            await service.update(ownerId, projectId, {
+                collaborators: [collaboratorId],
+            });
+
+            const projects = await service.findAll(collaboratorId);
 
             expect(projects.length).toBe(1);
             expect(projects[0].title).toBe(dto.title);
