@@ -304,9 +304,15 @@ describe('AppController (e2e)', () => {
 
         describe('Find project', () => {
             let projectId: string;
+            let collaboratorUserId: string;
+            let collaboratorAccessToken: string;
+            const collaboratorCredentials = {
+                email: 'collab@orator.com',
+            };
 
             beforeEach(async () => {
                 const dto = CreateProjectDTOStub();
+                // Owner creates a new project
                 projectId = await spec()
                     .post('/api/projects')
                     .withHeaders({
@@ -315,6 +321,42 @@ describe('AppController (e2e)', () => {
                     .withBody(dto)
                     .expectStatus(HttpStatus.CREATED)
                     .returns('_id');
+
+                // Register a collaborator user
+                await spec()
+                    .post('/api/auth/local/register')
+                    .withBody({
+                        ...AuthDTOStub(),
+                        ...collaboratorCredentials,
+                    })
+                    .expectStatus(HttpStatus.CREATED);
+                collaboratorAccessToken = await spec()
+                    .post('/api/auth/local/login')
+                    .withBody({
+                        ...AuthDTOStub(),
+                        email: collaboratorCredentials.email,
+                    })
+                    .expectStatus(HttpStatus.OK)
+                    .returns('access_token');
+
+                // Get collaborator's id
+                collaboratorUserId = getUserIdWithToken(
+                    collaboratorAccessToken,
+                );
+
+                // Let owner add the collaborator to the collaborators list
+                const projectDtoWithCollaborator: UpdateProjectDto = {
+                    ...CreateProjectDTOStub(),
+                    collaborators: [collaboratorUserId],
+                };
+                await spec()
+                    .patch('/api/projects/{id}')
+                    .withPathParams('id', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(projectDtoWithCollaborator)
+                    .expectStatus(HttpStatus.OK);
             });
 
             it('should find all projects by a user', async () => {
@@ -322,6 +364,16 @@ describe('AppController (e2e)', () => {
                     .get('/api/projects')
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.OK)
+                    .expectJsonLength(1);
+            });
+
+            it('should allow a collaborator to find all projects by a user', async () => {
+                await spec()
+                    .get('/api/projects')
+                    .withHeaders({
+                        Authorization: `Bearer ${collaboratorAccessToken}`,
                     })
                     .expectStatus(HttpStatus.OK)
                     .expectJsonLength(1);
@@ -355,17 +407,20 @@ describe('AppController (e2e)', () => {
                     { email: 'Sherwood@rosamond.me', password: 'mock' },
                     { email: 'Rey.Padberg@karina.biz', password: 'mock' },
                 ];
-                const tokens: {access_token: string, refresh_token: string}[] = await Promise.all(
+                const tokens: {
+                    access_token: string;
+                    refresh_token: string;
+                }[] = await Promise.all(
                     collaborators.map(async (collaborator) => {
                         return await spec()
                             .post('/api/auth/local/register')
                             .withBody(collaborator)
-                            .returns('res.body')
-                    })
-                )
-                const collaboratorIds = tokens.map(token => {
-                    return getUserIdWithToken(token.access_token)
-                })
+                            .returns('res.body');
+                    }),
+                );
+                const collaboratorIds = tokens.map((token) => {
+                    return getUserIdWithToken(token.access_token);
+                });
 
                 await spec()
                     .patch('/api/projects/{id}')
@@ -378,7 +433,7 @@ describe('AppController (e2e)', () => {
                     })
                     .expectStatus(HttpStatus.OK);
 
-                const response: {_id: string, email: string }[] = await spec()
+                const response: { _id: string; email: string }[] = await spec()
                     .get('/api/projects/{id}/members')
                     .withPathParams('id', `${projectId}`)
                     .withHeaders({
@@ -386,11 +441,14 @@ describe('AppController (e2e)', () => {
                     })
                     .expectStatus(HttpStatus.OK)
                     .expectJsonLength(4)
-                    .returns('res.body')
+                    .returns('res.body');
 
-                const memberEmails = [owner.email, ...collaborators.map(collaborator => collaborator.email)]
-                const responseEmails = response.map(user => user.email)
-                expect(responseEmails).toStrictEqual(memberEmails)
+                const memberEmails = [
+                    owner.email,
+                    ...collaborators.map((collaborator) => collaborator.email),
+                ];
+                const responseEmails = response.map((user) => user.email);
+                expect(responseEmails).toStrictEqual(memberEmails);
             });
         });
 
