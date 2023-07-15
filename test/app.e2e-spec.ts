@@ -808,7 +808,48 @@ describe('AppController (e2e)', () => {
         describe('Delete task', () => {
             let taskToBeDeleted: Task;
 
+            let collaboratorUserId: string;
+            let collaboratorAccessToken: string;
+            const collaboratorCredentials = {
+                email: 'collab@orator.com',
+            };
+
             beforeEach(async () => {
+                // Register a collaborator user
+                await spec()
+                    .post('/api/auth/local/register')
+                    .withBody({
+                        ...AuthDTOStub(),
+                        ...collaboratorCredentials,
+                    })
+                    .expectStatus(HttpStatus.CREATED);
+                collaboratorAccessToken = await spec()
+                    .post('/api/auth/local/login')
+                    .withBody({
+                        ...AuthDTOStub(),
+                        email: collaboratorCredentials.email,
+                    })
+                    .expectStatus(HttpStatus.OK)
+                    .returns('access_token');
+
+                // Get collaborator's id
+                collaboratorUserId = getUserIdWithToken(
+                    collaboratorAccessToken,
+                );
+
+                // Let owner add the collaborator to the collaborators list
+                const projectDtoWithCollaborator: UpdateProjectDto = {
+                    collaborators: [collaboratorUserId],
+                };
+                await spec()
+                    .patch('/api/projects/{id}')
+                    .withPathParams('id', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(projectDtoWithCollaborator)
+                    .expectStatus(HttpStatus.OK);
+
                 // Create a task to update
                 taskToBeDeleted = await spec()
                     .post('/api/projects/{projectId}/tasks')
@@ -822,7 +863,7 @@ describe('AppController (e2e)', () => {
             });
 
             it('should not be able to delete task by any non-project member', async () => {
-                // Register a collaborator user
+                // Register a non-project user
                 await spec()
                     .post('/api/auth/local/register')
                     .withBody({
@@ -831,7 +872,7 @@ describe('AppController (e2e)', () => {
                     })
                     .expectStatus(HttpStatus.CREATED);
 
-                const nonOwnerAccessToken = await spec()
+                const nonMemberAccessToken = await spec()
                     .post('/api/auth/local/login')
                     .withBody({
                         ...AuthDTOStub(),
@@ -840,13 +881,13 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.OK)
                     .returns('access_token');
 
-                // Non-owner attempts to delete
+                // Non-project member attempts to delete
                 await spec()
                     .delete('/api/projects/{projectId}/tasks/{taskId}')
                     .withPathParams('projectId', `${projectId}`)
                     .withPathParams('taskId', `${taskToBeDeleted._id}`)
                     .withHeaders({
-                        Authorization: `Bearer ${nonOwnerAccessToken}`,
+                        Authorization: `Bearer ${nonMemberAccessToken}`,
                     })
                     .expectStatus(HttpStatus.FORBIDDEN);
             });
@@ -868,6 +909,27 @@ describe('AppController (e2e)', () => {
                     .withPathParams('taskId', `${taskToBeDeleted._id}`)
                     .withHeaders({
                         Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.NOT_FOUND);
+            });
+
+            it('should be able to delete task by a project member', async () => {
+                await spec()
+                    .delete('/api/projects/{projectId}/tasks/{taskId}')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withPathParams('taskId', `${taskToBeDeleted._id}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${collaboratorAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.NO_CONTENT);
+
+                // Find deleted task
+                await spec()
+                    .get('/api/projects/{projectId}/tasks/{taskId}')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withPathParams('taskId', `${taskToBeDeleted._id}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${collaboratorAccessToken}`,
                     })
                     .expectStatus(HttpStatus.NOT_FOUND);
             });
