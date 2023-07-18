@@ -8,7 +8,7 @@ import { Task } from '../src/project/types';
 import { AppModule } from './../src/app.module';
 import { AuthDTOStub, CreateProjectDTOStub } from './stubs';
 import { CreateTaskDTOStub } from './stubs/task.dto.stub';
-import { getUserIdWithToken } from './utils';
+import { generateJwtToken, getUserIdWithToken } from './utils';
 
 describe('AppController (e2e)', () => {
     let app: INestApplication;
@@ -243,6 +243,20 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.UNAUTHORIZED);
             });
 
+            it('should not be able to access protected route GET /users/me for requests with expired authentication', async () => {
+                const ownerId = getUserIdWithToken(ownerAccessToken);
+                const expiredAccessToken = generateJwtToken(
+                    { sub: ownerId, email: AuthDTOStub().email },
+                    '1ms',
+                );
+                await spec()
+                    .get('/api/users/me')
+                    .withHeaders({
+                        Authorization: `Bearer ${expiredAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
+            });
+
             it.todo(
                 'should be able to retrieve projects owned by a specific user',
             );
@@ -299,6 +313,22 @@ describe('AppController (e2e)', () => {
                     })
                     .withBody(dto)
                     .expectStatus(HttpStatus.CREATED);
+            });
+
+            it('should not be able to access protected route POST /api/projects for requests with expired authentication', async () => {
+                const ownerId = getUserIdWithToken(ownerAccessToken);
+                const expiredAccessToken = generateJwtToken(
+                    { sub: ownerId, email: AuthDTOStub().email },
+                    '1ms',
+                );
+                const dto = CreateProjectDTOStub();
+                await spec()
+                    .post('/api/projects')
+                    .withHeaders({
+                        Authorization: `Bearer ${expiredAccessToken}`,
+                    })
+                    .withBody(dto)
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
             });
         });
 
@@ -369,6 +399,20 @@ describe('AppController (e2e)', () => {
                     .expectJsonLength(1);
             });
 
+            it('should not be able to access protected route GET /api/projects for requests with expired authentication', async () => {
+                const ownerId = getUserIdWithToken(ownerAccessToken);
+                const expiredAccessToken = generateJwtToken(
+                    { sub: ownerId, email: AuthDTOStub().email },
+                    '1ms',
+                );
+                await spec()
+                    .get('/api/projects')
+                    .withHeaders({
+                        Authorization: `Bearer ${expiredAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
+            });
+
             it('should allow a collaborator to find all projects by a user', async () => {
                 await spec()
                     .get('/api/projects')
@@ -399,6 +443,21 @@ describe('AppController (e2e)', () => {
                     })
                     .expectStatus(HttpStatus.OK)
                     .expectBodyContains(`${projectId}`);
+            });
+
+            it('should not be able to access protected route GET /api/projects/{id} for requests with expired authentication', async () => {
+                const ownerId = getUserIdWithToken(ownerAccessToken);
+                const expiredAccessToken = generateJwtToken(
+                    { sub: ownerId, email: AuthDTOStub().email },
+                    '1ms',
+                );
+                await spec()
+                    .get('/api/projects/{id}')
+                    .withPathParams('id', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${expiredAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
             });
 
             it('should be able to retrieve project members: owner + collaborators', async () => {
@@ -449,6 +508,21 @@ describe('AppController (e2e)', () => {
                 ];
                 const responseEmails = response.map((user) => user.email);
                 expect(responseEmails).toStrictEqual(memberEmails);
+            });
+
+            it('should not be able to access protected route GET /api/projects/{id}/members for requests with expired authentication', async () => {
+                const ownerId = getUserIdWithToken(ownerAccessToken);
+                const expiredAccessToken = generateJwtToken(
+                    { sub: ownerId, email: AuthDTOStub().email },
+                    '1ms',
+                );
+                await spec()
+                    .get('/api/projects/{id}/members')
+                    .withPathParams('id', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${expiredAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
             });
         });
 
@@ -533,6 +607,22 @@ describe('AppController (e2e)', () => {
                     .expectJsonMatch(updatedProjectDto);
             });
 
+            it('should not be able to access protected route PATCH /api/projects/{id} for requests with expired authentication', async () => {
+                const ownerId = getUserIdWithToken(ownerAccessToken);
+                const expiredAccessToken = generateJwtToken(
+                    { sub: ownerId, email: AuthDTOStub().email },
+                    '1ms',
+                );
+                await spec()
+                    .patch('/api/projects/{id}')
+                    .withPathParams('id', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${expiredAccessToken}`,
+                    })
+                    .withBody(updatedProjectDto)
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
+            });
+
             it('should not allow updating project details if not project owner', async () => {
                 await spec()
                     .patch('/api/projects/{id}')
@@ -609,6 +699,21 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.OK)
                     .expectJsonLength(0);
             });
+
+            it('should not be able to access protected route DELETE /api/projects/{id} for requests with expired authentication', async () => {
+                const ownerId = getUserIdWithToken(ownerAccessToken);
+                const expiredAccessToken = generateJwtToken(
+                    { sub: ownerId, email: AuthDTOStub().email },
+                    '1ms',
+                );
+                await spec()
+                    .delete('/api/projects/{id}')
+                    .withPathParams('id', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${expiredAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
+            });
         });
     });
 
@@ -668,6 +773,24 @@ describe('AppController (e2e)', () => {
                     .expectStatus(HttpStatus.CREATED)
                     .expectJsonMatch(newTask);
             });
+
+            it('should not be able to access protected route POST /api/projects/{projectId}/tasks for requests with expired authentication', async () => {
+                const newTask = CreateTaskDTOStub();
+                const ownerId = getUserIdWithToken(ownerAccessToken);
+                const expiredAccessToken = generateJwtToken(
+                    { sub: ownerId, email: AuthDTOStub().email },
+                    '1ms',
+                );
+
+                await spec()
+                    .post('/api/projects/{projectId}/tasks')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${expiredAccessToken}`,
+                    })
+                    .withBody(newTask)
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
+            });
         });
 
         describe('Find task', () => {
@@ -693,6 +816,22 @@ describe('AppController (e2e)', () => {
                     .expectJsonMatch([newTask]);
             });
 
+            it('should not be able to access protected route GET /api/projects/{projectId}/tasks for requests with expired authentication', async () => {
+                const ownerId = getUserIdWithToken(ownerAccessToken);
+                const expiredAccessToken = generateJwtToken(
+                    { sub: ownerId, email: AuthDTOStub().email },
+                    '1ms',
+                );
+
+                await spec()
+                    .get('/api/projects/{projectId}/tasks')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${expiredAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
+            });
+
             it('should find a specific task from a project', async () => {
                 const newTask: Task = await spec()
                     .post('/api/projects/{projectId}/tasks')
@@ -713,6 +852,33 @@ describe('AppController (e2e)', () => {
                     })
                     .expectStatus(HttpStatus.OK)
                     .expectJsonMatch(newTask);
+            });
+
+            it('should not be able to access protected route GET /api/projects/{projectId}/tasks for requests with expired authentication', async () => {
+                const ownerId = getUserIdWithToken(ownerAccessToken);
+                const expiredAccessToken = generateJwtToken(
+                    { sub: ownerId, email: AuthDTOStub().email },
+                    '1ms',
+                );
+
+                const newTask: Task = await spec()
+                    .post('/api/projects/{projectId}/tasks')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .withBody(CreateTaskDTOStub())
+                    .expectStatus(HttpStatus.CREATED)
+                    .returns('res.body');
+
+                await spec()
+                    .get('/api/projects/{projectId}/tasks/{taskId}')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withPathParams('taskId', `${newTask._id}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${expiredAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
             });
 
             it('should return 404 on non-existent task', async () => {
@@ -802,6 +968,24 @@ describe('AppController (e2e)', () => {
                             assignedMembers,
                         );
                     });
+            });
+
+            it('should not be able to access protected route PATCH /api/projects/{projectId}/tasks/{taskId} for requests with expired authentication', async () => {
+                const ownerId = getUserIdWithToken(ownerAccessToken);
+                const expiredAccessToken = generateJwtToken(
+                    { sub: ownerId, email: AuthDTOStub().email },
+                    '1ms',
+                );
+
+                await spec()
+                    .patch('/api/projects/{projectId}/tasks/{taskId}')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withPathParams('taskId', `${oldTask._id}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${expiredAccessToken}`,
+                    })
+                    .withBody(dto)
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
             });
         });
 
@@ -932,6 +1116,23 @@ describe('AppController (e2e)', () => {
                         Authorization: `Bearer ${collaboratorAccessToken}`,
                     })
                     .expectStatus(HttpStatus.NOT_FOUND);
+            });
+
+            it('should not be able to access protected route DELETE /api/projects/{projectId}/tasks/{taskId} for requests with expired authentication', async () => {
+                const ownerId = getUserIdWithToken(ownerAccessToken);
+                const expiredAccessToken = generateJwtToken(
+                    { sub: ownerId, email: AuthDTOStub().email },
+                    '1ms',
+                );
+
+                await spec()
+                    .delete('/api/projects/{projectId}/tasks/{taskId}')
+                    .withPathParams('projectId', `${projectId}`)
+                    .withPathParams('taskId', `${taskToBeDeleted._id}`)
+                    .withHeaders({
+                        Authorization: `Bearer ${expiredAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
             });
         });
     });
