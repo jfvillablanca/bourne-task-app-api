@@ -11,7 +11,6 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "prestart": "yarn db:dev-db:restart",
     "start": "nest start",
     "prestart:dev": "yarn db:dev-db:restart",
     "start:dev": "nest start --watch",
