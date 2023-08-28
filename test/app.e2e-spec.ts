@@ -214,7 +214,7 @@ describe('AppController (e2e)', () => {
 
     describe('User', () => {
         let ownerAccessToken: string;
-        beforeAll(async () => {
+        beforeEach(async () => {
             await spec()
                 .post('/api/auth/local/register')
                 .withBody(AuthDTOStub())
@@ -227,7 +227,22 @@ describe('AppController (e2e)', () => {
                 .returns('access_token');
         });
 
-        describe('Get me', () => {
+        describe('Find user', () => {
+            it('should find all users', async () => {
+                await spec()
+                    .get('/api/users')
+                    .withHeaders({
+                        Authorization: `Bearer ${ownerAccessToken}`,
+                    })
+                    .expectStatus(HttpStatus.OK);
+            });
+
+            it('should not be able to access protected route /users for requests with missing authentication', async () => {
+                await spec()
+                    .get('/api/users')
+                    .expectStatus(HttpStatus.UNAUTHORIZED);
+            });
+
             it('should get current user', async () => {
                 await spec()
                     .get('/api/users/me')
