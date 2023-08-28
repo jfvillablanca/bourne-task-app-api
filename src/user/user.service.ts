@@ -9,6 +9,10 @@ export class UserService {
         @InjectModel(User.name) private readonly userModel: Model<User>,
     ) {}
 
+    async findAll() {
+        return await this.userModel.find().exec();
+    }
+
     async getMe(userId: string) {
         const user = await this.userModel.findById(userId).exec();
         if (!user) throw new NotFoundException('User not found');

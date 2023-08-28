@@ -8,6 +8,11 @@ import { UserService } from './user.service';
 export class UserController {
     constructor(private readonly userService: UserService) {}
 
+    @Get()
+    findAll() {
+        return this.userService.findAll();
+    }
+
     @Get('me')
     getMe(@GetUser('id') userId: string) {
         return this.userService.getMe(userId);
