@@ -45,6 +45,19 @@ describe('UserService', () => {
         }
     });
 
+    it('should get an empty array of users', async () => {
+        const getAllUsers = await userService.findAll();
+        expect(getAllUsers).toStrictEqual([]);
+    });
+
+    it('should get an array with a single user when finding all users', async () => {
+        const user = await new userModel(AuthDTOStub()).save();
+
+        const getAllUsers = await userService.findAll();
+        expect(getAllUsers.length).toBe(1);
+        expect(getAllUsers[0].id).toBe(user.id);
+    });
+
     it('should throw an error on non-existent user', async () => {
         const nonExistentUserId = new Types.ObjectId().toHexString();
         await expect(userService.getMe(nonExistentUserId)).rejects.toThrow(
