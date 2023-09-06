@@ -101,13 +101,14 @@ export class TaskService {
     }
 
     private updateSubdocument<T>(oldSubdoc: T, updatedSubdoc: T) {
-        return Object.keys(oldSubdoc).reduce((acc, key) => {
+        const updatedSubdocument: T = { ...oldSubdoc };
+
+        for (const key in updatedSubdoc) {
             if (updatedSubdoc.hasOwnProperty(key)) {
-                acc[key] = updatedSubdoc[key];
-            } else {
-                acc[key] = oldSubdoc[key];
+                updatedSubdocument[key] = updatedSubdoc[key];
             }
-            return acc;
-        }, {} as T);
+        }
+
+        return updatedSubdocument;
     }
 }
