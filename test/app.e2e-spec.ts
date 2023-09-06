@@ -932,6 +932,7 @@ describe('AppController (e2e)', () => {
                 dto = {
                     ...CreateTaskDTOStub(),
                     title: 'Task with assigned members',
+                    description: 'Task with summary',
                     assignedProjMemberId: assignedMembers,
                 };
             });
@@ -979,6 +980,8 @@ describe('AppController (e2e)', () => {
 
                         expect(updatedTask._id).toBe(oldTask._id);
                         expect(updatedTask.title).not.toBe(oldTask.title);
+                        expect(updatedTask.title).toBe(dto.title);
+                        expect(updatedTask.description).toBe(dto.description);
                         expect(updatedTask.assignedProjMemberId).toStrictEqual(
                             assignedMembers,
                         );

@@ -222,6 +222,7 @@ describe('TaskService', () => {
             const dto: UpdateTaskDto = {
                 ...CreateTaskDTOStub(),
                 title: 'Updated task',
+                description: 'my description',
             };
 
             const updatedTask = await taskService.update(
@@ -238,8 +239,10 @@ describe('TaskService', () => {
 
             expect(updatedTask._id).toBe(taskId);
             expect(updatedTask.title).toBe(dto.title);
+            expect(updatedTask.description).toBe(dto.description);
             expect(updatedTaskReadFromDb._id).toBe(updatedTask._id);
             expect(updatedTaskReadFromDb.title).toBe(dto.title);
+            expect(updatedTaskReadFromDb.description).toBe(dto.description);
         });
     });
 
