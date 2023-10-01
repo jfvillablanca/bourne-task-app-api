@@ -1,7 +1,8 @@
 # Bourne Task App API
 
-#### (Work in progress)
 #### This backend provides the API endpoints for the Bourne Task App.
+
+#### Check out the [the full README and source code](https://github.com/jfvillablanca/bourne-task-app) for the frontend (React App using Tanstack Query for async state management) 
 
 ### Table of Contents
 
@@ -123,7 +124,7 @@ erDiagram
         string description
         ObjectId ownerId FK
         ObjectId[] collaboratorId FK
-        ObjectId[] taskId FK
+        Task[] task FK
     }
     USER ||--o{ OWNER: is
     USER ||--o{ COLLABORATOR: is
@@ -137,11 +138,9 @@ erDiagram
     }
     TASK }|..o{ USER: assigns
     TASK {
-        ObjectId id PK
         string title
         string content
-        ObjectId projectContainerId FK
-        ObjectId[] userAssignedId FK
+        ObjectId[] assignedProjMemberId FK
     }
     OWNER }|--|| PROJECT: owns
     OWNER {
